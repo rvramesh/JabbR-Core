@@ -4,8 +4,10 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore.Storage;
-using Microsoft.EntityFrameworkCore.Storage.Internal;
+using Microsoft.EntityFrameworkCore.InMemory.Storage.Internal;
 using Microsoft.Extensions.Logging;
+using Microsoft.EntityFrameworkCore.Diagnostics;
+using Microsoft.EntityFrameworkCore;
 
 namespace JabbRCore.Data.InMemory
 {
@@ -13,7 +15,7 @@ public class TestInMemoryTransactionManager : InMemoryTransactionManager
 {
     private IDbContextTransaction _currentTransaction;
 
-    public TestInMemoryTransactionManager(ILogger<InMemoryTransactionManager> logger)
+    public TestInMemoryTransactionManager(IDiagnosticsLogger<DbLoggerCategory.Database.Transaction> logger)
         : base(logger)
     {
     }
@@ -38,6 +40,15 @@ public class TestInMemoryTransactionManager : InMemoryTransactionManager
 
     private class TestInMemoryTransaction : IDbContextTransaction
     {
+        private Guid _transactionId;
+        public TestInMemoryTransaction()
+        {
+            _transactionId = Guid.NewGuid();
+        }
+
+        public Guid TransactionId {
+            get { return _transactionId; }
+        }
         public TestInMemoryTransaction(TestInMemoryTransactionManager transactionManager)
         {
             TransactionManager = transactionManager;
