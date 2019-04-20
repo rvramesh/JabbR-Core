@@ -22,10 +22,10 @@ using Microsoft.AspNetCore.Mvc.Formatters;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.EntityFrameworkCore.Storage.Internal;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
-
+using Microsoft.AspNetCore.Identity;
 using static JabbR_Core.Services.MessageServices;
 using JabbR_Core.Data.Logging;
-using Microsoft.AspNetCore.SignalR.Hubs;
+using Microsoft.AspNetCore.SignalR;
 
 namespace JabbR_Core
 {
@@ -42,7 +42,7 @@ namespace JabbR_Core
 
             if (env.IsDevelopment())
             {
-               builder.AddUserSecrets();
+               builder.AddUserSecrets<Startup>();
             }
 
             builder.AddEnvironmentVariables();
@@ -118,7 +118,7 @@ namespace JabbR_Core
             services.Configure<AuthMessageSenderOptions>(_configuration);
 
             //SignalR currently doesn't use DI to resolve hubs. This will allow it.
-            services.AddSingleton<IHubActivator, ServicesHubActivator>();
+           // services.AddSingleton<IHubActivator, DefaultHubActivator>();
             // This code has no effects right now, Chat hubs aren't called via DI
             // in SignalR, so at the moment we can't control the same objects being 
             // passed to hubs and ChatService
@@ -175,21 +175,21 @@ namespace JabbR_Core
             app.UseStaticFiles();
 
             app.UseIdentity();
-            app.UseFacebookAuthentication(new FacebookOptions()
-            {
-                AppId = _configuration["Authentication:Facebook:AppId"],
-                AppSecret = _configuration["Authentication:Facebook:AppSecret"]
-            });
+            // app.UseFacebookAuthentication(new FacebookOptions()
+            // {
+            //     AppId = _configuration["Authentication:Facebook:AppId"],
+            //     AppSecret = _configuration["Authentication:Facebook:AppSecret"]
+            // });
             //app.UseMicrosoftAccountAuthentication(new MicrosoftAccountOptions()
             //{
             //    ClientId = _configuration["Authentication:Microsoft:AppId"],
             //    ClientSecret = _configuration["Authentication:Microsoft:AppSecret"]
             //});
-            app.UseGoogleAuthentication(new GoogleOptions()
-            {
-                ClientId = _configuration["Authentication:Google:AppId"],
-                ClientSecret = _configuration["Authentication:Google:AppSecret"]
-            });
+            // app.UseGoogleAuthentication(new GoogleOptions()
+            // {
+            //     ClientId = _configuration["Authentication:Google:AppId"],
+            //     ClientSecret = _configuration["Authentication:Google:AppSecret"]
+            // });
             //app.UseTwitterAuthentication(new TwitterOptions()
             //{
             //    ConsumerKey = _configuration["Authentication:Twitter:AppId"],
@@ -198,7 +198,9 @@ namespace JabbR_Core
 
 
             app.UseMvcWithDefaultRoute();
-            app.UseSignalR();
+            app.UseSignalR(routes=>{
+                routes.MapHub<Chat>("/chat");
+            });
         }
     }
 }
