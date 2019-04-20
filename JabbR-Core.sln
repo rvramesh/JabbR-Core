@@ -12,11 +12,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		NuGet.config = NuGet.config
 	EndProjectSection
 EndProject
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "JabbR-Core", "src\JabbR-Core\JabbR-Core.xproj", "{44F3E272-7DD2-4F54-A013-DEBADFA29CE8}"
+Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "JabbR-Core", "src\JabbR-Core\JabbR-Core.csproj", "{44F3E272-7DD2-4F54-A013-DEBADFA29CE8}"
 EndProject
 Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "JabbR-Core.Tests", "test\JabbR-Core.Tests\JabbR-Core.Tests.xproj", "{C86B5482-BA50-486E-AC03-8828344C2AE2}"
 EndProject
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "JabbR-Core.Data", "src\JabbR-Core.Data\JabbR-Core.Data.xproj", "{CF5231E0-E3E5-40F0-852B-5258E54F5531}"
+Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "JabbR-Core.Data", "src\JabbR-Core.Data\JabbR-Core.Data.csproj", "{CF5231E0-E3E5-40F0-852B-5258E54F5531}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

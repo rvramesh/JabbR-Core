@@ -14,10 +14,11 @@ using JabbR_Core.Data.Repositories;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Options;
 using Microsoft.EntityFrameworkCore;
+using System.Collections.ObjectModel;
 
 namespace JabbR_Core.Hubs
 {
-    public class Chat : Hub, INotificationService
+    public class Chat : DynamicHub, INotificationService
     {
         // Never assigned to, always null
         private readonly ICache _cache;
@@ -47,9 +48,9 @@ namespace JabbR_Core.Hubs
         {
             get
             {
-                if (Context.Headers != null)
+                if (Context.GetHttpContext()?.Request?.Headers != null)
                 {
-                    return Context.Headers["User-Agent"];
+                    return Context.GetHttpContext()?.Request?.Headers["User-Agent"];
                 }
                 return null;
             }
@@ -303,7 +304,7 @@ namespace JabbR_Core.Hubs
         {
             get
             {
-                string version = Context.QueryString["version"];
+                string version = Context.GetHttpContext()?.Request?.Query["version"];
 
                 if (String.IsNullOrEmpty(version))
                 {
@@ -349,7 +350,7 @@ namespace JabbR_Core.Hubs
 
             foreach (var client in user.ConnectedClients)
             {
-                Groups.Add(client.Id, room.Name);
+                Groups.AddToGroupAsync(client.Id, room.Name);
             }
         }
 
@@ -426,7 +427,7 @@ namespace JabbR_Core.Hubs
 
             foreach (var client in targetUser.ConnectedClients)
             {
-                Groups.Remove(client.Id, room.Name);
+                Groups.RemoveFromGroupAsync(client.Id, room.Name);
             }
 
             OnRoomChanged(room);
@@ -586,7 +587,7 @@ namespace JabbR_Core.Hubs
             var userViewModel = new UserViewModel(targetUser);
 
             // Tell everyone that the room's locked
-            Clients.Clients(_repository.GetAllowedClientIds(room)).lockRoom(userViewModel, room.Name, true);
+            Clients.Clients(new ReadOnlyCollection<string>(_repository.GetAllowedClientIds(room))).lockRoom(userViewModel, room.Name, true);
             Clients.AllExcept(_repository.GetAllowedClientIds(room).ToArray()).lockRoom(userViewModel, room.Name, false);
 
             // Tell the caller the room was successfully locked
@@ -741,7 +742,7 @@ namespace JabbR_Core.Hubs
 
             foreach (var client in user.ConnectedClients)
             {
-                Groups.Remove(client.Id, room.Name);
+                Groups.RemoveFromGroupAsync(client.Id, room.Name);
             }
 
             OnRoomChanged(room);
@@ -890,7 +891,7 @@ namespace JabbR_Core.Hubs
             }
             else
             {
-                Clients.Clients(_repository.GetAllowedClientIds(room)).updateRoom(roomViewModel);
+                Clients.Clients(new ReadOnlyCollection<string>(_repository.GetAllowedClientIds(room))).updateRoom(roomViewModel);
             }
         }
 
@@ -944,7 +945,7 @@ namespace JabbR_Core.Hubs
                 foreach (var room in rooms)
                 {
                     // Remove the user from this the room group so he doesn't get the general ban message
-                    Groups.Remove(client.Id, room);
+                    Groups.RemoveFromGroupAsync(client.Id, room);
                 }
             }
         }
@@ -1027,7 +1028,7 @@ namespace JabbR_Core.Hubs
                 Clients.Group(room.Name).addUser(userViewModel, room.Name, isOwner);
 
                 // Add the caller to the group so they receive messages
-                Groups.Add(clientId, room.Name);
+                Groups.AddToGroupAsync(clientId, room.Name);
 
                 if (!reconnecting)
                 {
