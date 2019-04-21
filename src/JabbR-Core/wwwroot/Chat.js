@@ -3,11 +3,15 @@
 /// <reference path="Scripts/jquery.cookie.js" />
 /// <reference path="Chat.ui.js" />
 /// <reference path="Scripts/moment.min.js" />
+var myNewHubConnection =new signalR.HubConnectionBuilder()
+    .withUrl("/chats")
+    .configureLogging(signalR.LogLevel.Information)
+    .build();
 
 (function ($, connection, window, ui, utility) {
     "use strict";
 
-    var chat = connection.chat,
+    var chat = connection,
         messageHistory = [],
         historyLocation = 0,
         originalTitle = document.title,
@@ -78,10 +82,10 @@
     }
 
     function populateRooms(rooms) {
-        connection.hub.log('loadRooms(' + rooms.join(', ') + ')');
+        connection.log('loadRooms(' + rooms.join(', ') + ')');
 
         // Populate the list of users rooms and messages 
-        chat.server.loadRooms(rooms)
+        chat.invoke("loadRooms",rooms)
             .done(function () {
                 connection.hub.log('loadRooms.done(' + rooms.join(', ') + ')');
             })
@@ -101,7 +105,7 @@
         connection.hub.log('getRoomInfo(' + room + ')');
 
         // Populate the list of users rooms and messages 
-        chat.server.getRoomInfo(room)
+        chat.invoke("getRoomInfo",room)
                 .done(function (roomInfo) {
                     connection.hub.log('getRoomInfo.done(' + room + ')');
 
@@ -170,7 +174,7 @@
 
         try {
             // Populate the user list with room names
-            chat.server.getRooms()
+            chat.invoke("getRooms")
                 .done(function (rooms) {
                     ui.populateLobbyRooms(rooms, privateRooms);
                     ui.setInitialized('Lobby');
@@ -289,7 +293,7 @@
     // Room commands
 
     // When the /join command gets raised this is called
-    chat.client.joinRoom = function (room) {
+   chat.on("joinRoom",function (room) {
         ui.setRoomLoading(true, room.Name);
         var added = ui.addRoom(room);
 
@@ -315,16 +319,16 @@
         else {
             ui.setRoomLoading(false);
         }
-    };
+    });
 
     // Called when a returning users join chat
-    chat.client.logOn = function (rooms, myRooms, userPreferences) {
+    chat.on("logOn",function (rooms, myRooms, userPreferences) {
         privateRooms = myRooms;
 
         var loadRooms = function () {
             var filteredRooms = [];
             $.each(rooms, function (index, room) {
-                if (chat.state.activeRoom !== room.Name) {
+               if (chat.state.activeRoom !== room.Name) {
                     filteredRooms.push(room.Name);
                 }
             });
@@ -403,9 +407,9 @@
                 }
             });
         }
-    };
+    });
 
-    chat.client.roomLoaded = function (roomInfo) {
+    chat.on("roomLoaded",function (roomInfo) {
         populateRoomFromInfo(roomInfo);
 
         if (roomsToLoad === 1) { 
@@ -414,13 +418,13 @@
         else {
             roomsToLoad = roomsToLoad - 1;
         }
-    };
+    });
 
-    chat.client.logOut = function () {
+    chat.on("logOut",function () {
         performLogout();
-    };
+    });
 
-    chat.client.lockRoom = function (user, room, userHasAccess) {
+    chat.on("lockRoom",function (user, room, userHasAccess) {
         if (!isSelf(user) && this.state.activeRoom === room) {
             ui.addNotificationToActiveRoom(utility.getLanguageResource('Chat_UserLockedRoom', user.Name, room));
         }
@@ -431,14 +435,14 @@
         } else {
             ui.removeLobbyRoom(room);
         }
-    };
+    });
 
     // Called when this user locked a room
-    chat.client.roomLocked = function (room) {
+    chat.on("roomLocked",function (room) {
         ui.addNotificationToActiveRoom(utility.getLanguageResource('Chat_RoomNowLocked', room));
-    };
+    });
 
-    chat.client.roomClosed = function (room) {
+    chat.on("roomClosed", function (room) {
         ui.addNotificationToActiveRoom(utility.getLanguageResource('Chat_RoomNowClosed', room));
 
         ui.closeRoom(room);
@@ -446,9 +450,9 @@
         if (this.state.activeRoom === room) {
             ui.toggleMessageSection(true);
         }
-    };
+    });
 
-    chat.client.roomUnClosed = function (room) {
+    chat.on("roomUnClosed", function (room) {
         ui.addNotificationToActiveRoom(utility.getLanguageResource('Chat_RoomNowOpen', room));
 
         ui.unCloseRoom(room);
@@ -456,593 +460,593 @@
         if (this.state.activeRoom === room) {
             ui.toggleMessageSection(false);
         }
-    };
+    });
 
-    chat.client.addOwner = function (user, room) {
+    chat.on("addOwner",function (user, room) {
         ui.setRoomOwner(user.Name, room);
-    };
+    });
 
-    chat.client.removeOwner = function (user, room) {
-        ui.clearRoomOwner(user.Name, room);
-    };
+    //chat.client.removeOwner = function (user, room) {
+    //    ui.clearRoomOwner(user.Name, room);
+    //};
 
-    chat.client.updateRoom = function (room) {
-        ui.updateLobbyRoom(room);
-    };
+    //chat.client.updateRoom = function (room) {
+    //    ui.updateLobbyRoom(room);
+    //};
 
-    chat.client.markInactive = function (users) {
-        $.each(users, function () {
-            var viewModel = getUserViewModel(this);
-            ui.setUserActivity(viewModel);
-        });
-    };
+    //chat.client.markInactive = function (users) {
+    //    $.each(users, function () {
+    //        var viewModel = getUserViewModel(this);
+    //        ui.setUserActivity(viewModel);
+    //    });
+    //};
 
-    chat.client.updateActivity = function (user) {
-        var viewModel = getUserViewModel(user);
-        ui.setUserActivity(viewModel);
-    };
+    //chat.client.updateActivity = function (user) {
+    //    var viewModel = getUserViewModel(user);
+    //    ui.setUserActivity(viewModel);
+    //};
 
-    chat.client.addMessageContent = function (id, content, room) {
-        scrollIfNecessary(function () {
-            ui.addChatMessageContent(id, content, room);
-        }, room);
+    //chat.client.addMessageContent = function (id, content, room) {
+    //    scrollIfNecessary(function () {
+    //        ui.addChatMessageContent(id, content, room);
+    //    }, room);
 
-        updateUnread(room, false /* isMentioned: this is outside normal messages and user shouldn't be mentioned */);
+    //    updateUnread(room, false /* isMentioned: this is outside normal messages and user shouldn't be mentioned */);
 
-        ui.watchMessageScroll([id], room);
-    };
+    //    ui.watchMessageScroll([id], room);
+    //};
 
-    chat.client.replaceMessage = function (id, message, room) {
-        ui.confirmMessage(id);
+    //chat.client.replaceMessage = function (id, message, room) {
+    //    ui.confirmMessage(id);
 
-        var viewModel = getMessageViewModel(message);
+    //    var viewModel = getMessageViewModel(message);
 
-        scrollIfNecessary(function () {
+    //    scrollIfNecessary(function () {
 
-            // Update your message when it comes from the server
-            ui.overwriteMessage(id, viewModel);
-        }, room);
+    //        // Update your message when it comes from the server
+    //        ui.overwriteMessage(id, viewModel);
+    //    }, room);
 
-        var isMentioned = viewModel.highlight === 'highlight';
+    //    var isMentioned = viewModel.highlight === 'highlight';
 
-        updateUnread(room, isMentioned);
-    };
+    //    updateUnread(room, isMentioned);
+    //};
 
-    chat.client.addMessage = function (message, room) {
-        var viewModel = getMessageViewModel(message);
+    //chat.client.addMessage = function (message, room) {
+    //    var viewModel = getMessageViewModel(message);
 
-        scrollIfNecessary(function () {
-            // Update your message when it comes from the server
-            if (ui.messageExists(viewModel.id)) {
-                ui.replaceMessage(viewModel);
-            } else {
-                ui.addChatMessage(viewModel, room);
-            }
-        }, room);
+    //    scrollIfNecessary(function () {
+    //        // Update your message when it comes from the server
+    //        if (ui.messageExists(viewModel.id)) {
+    //            ui.replaceMessage(viewModel);
+    //        } else {
+    //            ui.addChatMessage(viewModel, room);
+    //        }
+    //    }, room);
 
-        var isMentioned = viewModel.highlight === 'highlight';
+    //    var isMentioned = viewModel.highlight === 'highlight';
 
-        updateUnread(room, isMentioned);
-    };
+    //    updateUnread(room, isMentioned);
+    //};
 
-    chat.client.addUser = function (user, room, isOwner) {
-        var viewModel = getUserViewModel(user, isOwner);
+    //chat.client.addUser = function (user, room, isOwner) {
+    //    var viewModel = getUserViewModel(user, isOwner);
 
-        var added = ui.addUser(viewModel, room);
+    //    var added = ui.addUser(viewModel, room);
 
-        if (added) {
-            if (!isSelf(user)) {
-                ui.addNotification(utility.getLanguageResource('Chat_UserEnteredRoom', user.Name, room), room);
-            }
-        }
-    };
+    //    if (added) {
+    //        if (!isSelf(user)) {
+    //            ui.addNotification(utility.getLanguageResource('Chat_UserEnteredRoom', user.Name, room), room);
+    //        }
+    //    }
+    //};
 
-    chat.client.changeUserName = function (oldName, user, room) {
-        ui.changeUserName(oldName, user, room);
+    //chat.client.changeUserName = function (oldName, user, room) {
+    //    ui.changeUserName(oldName, user, room);
 
-        if (!isSelf(user)) {
-            ui.addNotification(utility.getLanguageResource('Chat_UserNameChanged', oldName, user.Name), room);
-        }
-    };
+    //    if (!isSelf(user)) {
+    //        ui.addNotification(utility.getLanguageResource('Chat_UserNameChanged', oldName, user.Name), room);
+    //    }
+    //};
 
-    chat.client.changeGravatar = function (user, room) {
-        ui.changeGravatar(user, room);
+    //chat.client.changeGravatar = function (user, room) {
+    //    ui.changeGravatar(user, room);
 
-        if (!isSelf(user)) {
-            ui.addNotification(utility.getLanguageResource('Chat_UserGravatarChanged', user.Name), room);
-        }
-    };
+    //    if (!isSelf(user)) {
+    //        ui.addNotification(utility.getLanguageResource('Chat_UserGravatarChanged', user.Name), room);
+    //    }
+    //};
 
-    // User single client commands
+    //// User single client commands
 
-    chat.client.allowUser = function (room, roomInfo) {
-        ui.addNotificationToActiveRoom(utility.getLanguageResource('Chat_YouGrantedRoomAccess', room));
+    //chat.client.allowUser = function (room, roomInfo) {
+    //    ui.addNotificationToActiveRoom(utility.getLanguageResource('Chat_YouGrantedRoomAccess', room));
 
-        ui.updateLobbyRoom(roomInfo);
-    };
+    //    ui.updateLobbyRoom(roomInfo);
+    //};
 
-    chat.client.userAllowed = function (user, room) {
-        ui.addNotificationToActiveRoom(utility.getLanguageResource('Chat_UserGrantedRoomAccess', user, room));
-    };
+    //chat.client.userAllowed = function (user, room) {
+    //    ui.addNotificationToActiveRoom(utility.getLanguageResource('Chat_UserGrantedRoomAccess', user, room));
+    //};
 
-    chat.client.unallowUser = function (room) {
-        ui.addNotificationToActiveRoom(utility.getLanguageResource('Chat_YourRoomAccessRevoked', room));
+    //chat.client.unallowUser = function (room) {
+    //    ui.addNotificationToActiveRoom(utility.getLanguageResource('Chat_YourRoomAccessRevoked', room));
 
-        ui.removeLobbyRoom(room);
-    };
+    //    ui.removeLobbyRoom(room);
+    //};
 
-    chat.client.userUnallowed = function (user, room) {
-        ui.addNotificationToActiveRoom(utility.getLanguageResource('Chat_YouRevokedUserRoomAccess', user, room));
-    };
+    //chat.client.userUnallowed = function (user, room) {
+    //    ui.addNotificationToActiveRoom(utility.getLanguageResource('Chat_YouRevokedUserRoomAccess', user, room));
+    //};
 
-    // Called when you make someone an owner
-    chat.client.ownerMade = function (user, room) {
-        ui.addNotificationToActiveRoom(utility.getLanguageResource('Chat_UserGrantedRoomOwnership', user, room));
-    };
+    //// Called when you make someone an owner
+    //chat.client.ownerMade = function (user, room) {
+    //    ui.addNotificationToActiveRoom(utility.getLanguageResource('Chat_UserGrantedRoomOwnership', user, room));
+    //};
 
-    chat.client.ownerRemoved = function (user, room) {
-        ui.addNotificationToActiveRoom(utility.getLanguageResource('Chat_UserRoomOwnershipRevoked', user, room));
-    };
+    //chat.client.ownerRemoved = function (user, room) {
+    //    ui.addNotificationToActiveRoom(utility.getLanguageResource('Chat_UserRoomOwnershipRevoked', user, room));
+    //};
 
-    // Called when you've been made an owner
-    chat.client.makeOwner = function (room) {
-        ui.addNotificationToActiveRoom(utility.getLanguageResource('Chat_YouGrantedRoomOwnership', room));
-    };
+    //// Called when you've been made an owner
+    //chat.client.makeOwner = function (room) {
+    //    ui.addNotificationToActiveRoom(utility.getLanguageResource('Chat_YouGrantedRoomOwnership', room));
+    //};
 
-    // Called when you've been removed as an owner
-    chat.client.demoteOwner = function (room) {
-        ui.addNotificationToActiveRoom(utility.getLanguageResource('Chat_YourRoomOwnershipRevoked', room));
-    };
+    //// Called when you've been removed as an owner
+    //chat.client.demoteOwner = function (room) {
+    //    ui.addNotificationToActiveRoom(utility.getLanguageResource('Chat_YourRoomOwnershipRevoked', room));
+    //};
 
-    // Called when your gravatar has been changed
-    chat.client.gravatarChanged = function (hash) {
-        ui.setUserHash(hash);
+    //// Called when your gravatar has been changed
+    //chat.client.gravatarChanged = function (hash) {
+    //    ui.setUserHash(hash);
 
-        ui.addNotificationToActiveRoom(utility.getLanguageResource('Chat_YourGravatarChanged'));
-    };
+    //    ui.addNotificationToActiveRoom(utility.getLanguageResource('Chat_YourGravatarChanged'));
+    //};
 
-    // Called when the server sends a notification message
-    chat.client.postNotification = function (msg, room) {
-        ui.addNotification(msg, room);
-    };
+    //// Called when the server sends a notification message
+    //chat.client.postNotification = function (msg, room) {
+    //    ui.addNotification(msg, room);
+    //};
 
-    chat.client.postMessage = function (msg, type, room) {
-        ui.addMessage(msg, type, room);
-    };
+    //chat.client.postMessage = function (msg, type, room) {
+    //    ui.addMessage(msg, type, room);
+    //};
 
-    chat.client.forceUpdate = function () {
-        ui.showUpdateUI();
-    };
+    //chat.client.forceUpdate = function () {
+    //    ui.showUpdateUI();
+    //};
 
-    chat.client.ban = function (userInfo, room, callingUser, reason) {
-        var message;
+    //chat.client.ban = function (userInfo, room, callingUser, reason) {
+    //    var message;
 
-        if (isSelf(userInfo)) {
-            // don't show multiple instances of dialog
-            if (banDialogShown === true) {
-                return;
-            }
-            banDialogShown = true;
+    //    if (isSelf(userInfo)) {
+    //        // don't show multiple instances of dialog
+    //        if (banDialogShown === true) {
+    //            return;
+    //        }
+    //        banDialogShown = true;
 
-            var title = utility.getLanguageResource('Chat_YouBannedTitle');
-            if (reason !== null) {
-                message = utility.getLanguageResource('Chat_YouBannedReason', callingUser.Name, reason);
-            } else {
-                message = utility.getLanguageResource('Chat_YouBanned', callingUser.Name);
-            }
+    //        var title = utility.getLanguageResource('Chat_YouBannedTitle');
+    //        if (reason !== null) {
+    //            message = utility.getLanguageResource('Chat_YouBannedReason', callingUser.Name, reason);
+    //        } else {
+    //            message = utility.getLanguageResource('Chat_YouBanned', callingUser.Name);
+    //        }
 
-            ui.addModalMessage(title, message, 'icon-ban-circle').done(function() {
-                performLogout();
-            });
-        } else {
-            if (reason !== null) {
-                message = utility.getLanguageResource('Chat_UserBannedReason', userInfo.Name, callingUser.Name, reason);
-            } else {
-                message = utility.getLanguageResource('Chat_UserBanned', userInfo.Name, callingUser.Name);
-            }
+    //        ui.addModalMessage(title, message, 'icon-ban-circle').done(function() {
+    //            performLogout();
+    //        });
+    //    } else {
+    //        if (reason !== null) {
+    //            message = utility.getLanguageResource('Chat_UserBannedReason', userInfo.Name, callingUser.Name, reason);
+    //        } else {
+    //            message = utility.getLanguageResource('Chat_UserBanned', userInfo.Name, callingUser.Name);
+    //        }
 
-            ui.addNotification(message, room);
-            ui.removeUser(userInfo, room);
-        }
-    };
+    //        ui.addNotification(message, room);
+    //        ui.removeUser(userInfo, room);
+    //    }
+    //};
 
-    chat.client.unbanUser = function (userInfo) {
-        var msg = 'User ' + userInfo.Name + ' was unbanned';
-        ui.addNotificationToActiveRoom(msg);
-    };
+    //chat.client.unbanUser = function (userInfo) {
+    //    var msg = 'User ' + userInfo.Name + ' was unbanned';
+    //    ui.addNotificationToActiveRoom(msg);
+    //};
 
-    chat.client.checkBanned = function (userInfo) {
-        var msg = 'User ' + userInfo.Name + ' is ' + (userInfo.IsBanned ? '' : 'not ') + 'banned ';
-        ui.addNotificationToActiveRoom(msg);
-    };
+    //chat.client.checkBanned = function (userInfo) {
+    //    var msg = 'User ' + userInfo.Name + ' is ' + (userInfo.IsBanned ? '' : 'not ') + 'banned ';
+    //    ui.addNotificationToActiveRoom(msg);
+    //};
 
-    chat.client.showUserInfo = function (userInfo) {
-        var lastActivityDate = userInfo.LastActivity.fromJsonDate(),
-            header,
-            list = [];
-        var status = "Currently " + userInfo.Status;
-        if (userInfo.IsAfk) {
-            status += userInfo.Status === 'Active' ? ' but ' : ' and ';
-            status += ' is Afk';
-        }
+    //chat.client.showUserInfo = function (userInfo) {
+    //    var lastActivityDate = userInfo.LastActivity.fromJsonDate(),
+    //        header,
+    //        list = [];
+    //    var status = "Currently " + userInfo.Status;
+    //    if (userInfo.IsAfk) {
+    //        status += userInfo.Status === 'Active' ? ' but ' : ' and ';
+    //        status += ' is Afk';
+    //    }
         
-        header = 'User information for ' + userInfo.Name + ' (' + status + ' - last seen ' + $.timeago(lastActivityDate) + ')';
+    //    header = 'User information for ' + userInfo.Name + ' (' + status + ' - last seen ' + $.timeago(lastActivityDate) + ')';
 
-        if (userInfo.AfkNote) {
-            list.push('Afk: ' + userInfo.AfkNote);
-        }
-        else if (userInfo.Note) {
-            list.push('Note: ' + userInfo.Note);
-        }
+    //    if (userInfo.AfkNote) {
+    //        list.push('Afk: ' + userInfo.AfkNote);
+    //    }
+    //    else if (userInfo.Note) {
+    //        list.push('Note: ' + userInfo.Note);
+    //    }
 
-        ui.addListToActiveRoom(header, list);
+    //    ui.addListToActiveRoom(header, list);
 
-        if (userInfo.Hash) {
-            $.getJSON('https://secure.gravatar.com/' + userInfo.Hash + '.json?callback=?').done(function (profile) {
-                if (profile && profile.entry) {
-                    ui.showGravatarProfile(profile.entry[0]);
-                }
-            });
-        }
+    //    if (userInfo.Hash) {
+    //        $.getJSON('https://secure.gravatar.com/' + userInfo.Hash + '.json?callback=?').done(function (profile) {
+    //            if (profile && profile.entry) {
+    //                ui.showGravatarProfile(profile.entry[0]);
+    //            }
+    //        });
+    //    }
 
-        chat.client.showUsersOwnedRoomList(userInfo.Name, userInfo.OwnedRooms);
-    };
+    //    chat.client.showUsersOwnedRoomList(userInfo.Name, userInfo.OwnedRooms);
+    //};
 
-    chat.client.changeAfk = function (user, room) {
-        var viewModel = getUserViewModel(user);
+    //chat.client.changeAfk = function (user, room) {
+    //    var viewModel = getUserViewModel(user);
 
-        ui.changeNote(viewModel, room);
+    //    ui.changeNote(viewModel, room);
 
-        var message;
+    //    var message;
 
-        if (!isSelf(user)) {
-            if (user.AfkNote) {
-                message = utility.getLanguageResource('Chat_UserIsAfkNote', user.Name, user.AfkNote);
-            } else {
-                message = utility.getLanguageResource('Chat_UserIsAfk', user.Name);
-            }
-        } else {
-            if (user.AfkNote) {
-                message = utility.getLanguageResource('Chat_YouAreAfkNote', user.AfkNote);
-            } else {
-                message = utility.getLanguageResource('Chat_YouAreAfk');
-            }
-        }
+    //    if (!isSelf(user)) {
+    //        if (user.AfkNote) {
+    //            message = utility.getLanguageResource('Chat_UserIsAfkNote', user.Name, user.AfkNote);
+    //        } else {
+    //            message = utility.getLanguageResource('Chat_UserIsAfk', user.Name);
+    //        }
+    //    } else {
+    //        if (user.AfkNote) {
+    //            message = utility.getLanguageResource('Chat_YouAreAfkNote', user.AfkNote);
+    //        } else {
+    //            message = utility.getLanguageResource('Chat_YouAreAfk');
+    //        }
+    //    }
 
-        ui.addNotification(message, room);
-    };
+    //    ui.addNotification(message, room);
+    //};
 
-    // Make sure all the people in all the rooms know that a user has changed their note.
-    chat.client.changeNote = function (user, room) {
-        var viewModel = getUserViewModel(user);
+    //// Make sure all the people in all the rooms know that a user has changed their note.
+    //chat.client.changeNote = function (user, room) {
+    //    var viewModel = getUserViewModel(user);
 
-        ui.changeNote(viewModel, room);
+    //    ui.changeNote(viewModel, room);
 
-        var message;
+    //    var message;
 
-        if (!isSelf(user)) {
-            if (user.Note) {
-                message = utility.getLanguageResource('Chat_UserNoteSet', user.Name, user.Note);
-            } else {
-                message = utility.getLanguageResource('Chat_UserNoteCleared', user.Name);
-            }
-        } else {
-            if (user.Note) {
-                message = utility.getLanguageResource('Chat_YourNoteSet', user.Note);
-            } else {
-                message = utility.getLanguageResource('Chat_YourNoteCleared');
-            }
-        }
+    //    if (!isSelf(user)) {
+    //        if (user.Note) {
+    //            message = utility.getLanguageResource('Chat_UserNoteSet', user.Name, user.Note);
+    //        } else {
+    //            message = utility.getLanguageResource('Chat_UserNoteCleared', user.Name);
+    //        }
+    //    } else {
+    //        if (user.Note) {
+    //            message = utility.getLanguageResource('Chat_YourNoteSet', user.Note);
+    //        } else {
+    //            message = utility.getLanguageResource('Chat_YourNoteCleared');
+    //        }
+    //    }
 
-        ui.addNotification(message, room);
-    };
+    //    ui.addNotification(message, room);
+    //};
 
-    chat.client.topicChanged = function (roomName, topic, who) {
-        var message,
-            isCleared = (topic === '');
+    //chat.client.topicChanged = function (roomName, topic, who) {
+    //    var message,
+    //        isCleared = (topic === '');
 
-        if (who === ui.getUserName()) {
-            if (!isCleared) {
-                message = utility.getLanguageResource('Chat_YouSetRoomTopic', topic);
-            } else {
-                message = utility.getLanguageResource('Chat_YouClearedRoomTopic');
-            }
-        } else {
-            if (!isCleared) {
-                message = utility.getLanguageResource('Chat_UserSetRoomTopic', who, topic);
-            } else {
-                message = utility.getLanguageResource('Chat_UserClearedRoomTopic', who);
-            }
-        }
+    //    if (who === ui.getUserName()) {
+    //        if (!isCleared) {
+    //            message = utility.getLanguageResource('Chat_YouSetRoomTopic', topic);
+    //        } else {
+    //            message = utility.getLanguageResource('Chat_YouClearedRoomTopic');
+    //        }
+    //    } else {
+    //        if (!isCleared) {
+    //            message = utility.getLanguageResource('Chat_UserSetRoomTopic', who, topic);
+    //        } else {
+    //            message = utility.getLanguageResource('Chat_UserClearedRoomTopic', who);
+    //        }
+    //    }
 
-        ui.addNotification(message, roomName);
+    //    ui.addNotification(message, roomName);
 
-        ui.changeRoomTopic(roomName, topic);
-    };
+    //    ui.changeRoomTopic(roomName, topic);
+    //};
 
-    chat.client.welcomeChanged = function (isCleared, welcome) {
-        var message;
+    //chat.client.welcomeChanged = function (isCleared, welcome) {
+    //    var message;
 
-        if (!isCleared) {
-            message = utility.getLanguageResource('Chat_YouSetRoomWelcome', welcome);
-        } else {
-            message = utility.getLanguageResource('Chat_YouClearedRoomWelcome');
-        }
+    //    if (!isCleared) {
+    //        message = utility.getLanguageResource('Chat_YouSetRoomWelcome', welcome);
+    //    } else {
+    //        message = utility.getLanguageResource('Chat_YouClearedRoomWelcome');
+    //    }
 
-        ui.addNotificationToActiveRoom(message);
-        if (welcome) {
-            ui.addWelcomeToActiveRoom(welcome);
-        }
-    };
+    //    ui.addNotificationToActiveRoom(message);
+    //    if (welcome) {
+    //        ui.addWelcomeToActiveRoom(welcome);
+    //    }
+    //};
 
-    // Called when you have added or cleared a flag
-    chat.client.flagChanged = function (isCleared, country) {
-        var message;
+    //// Called when you have added or cleared a flag
+    //chat.client.flagChanged = function (isCleared, country) {
+    //    var message;
 
-        if (!isCleared) {
-            message = utility.getLanguageResource('Chat_YouSetFlag', country);
-        } else {
-            message = utility.getLanguageResource('Chat_YouClearedFlag');
-        }
+    //    if (!isCleared) {
+    //        message = utility.getLanguageResource('Chat_YouSetFlag', country);
+    //    } else {
+    //        message = utility.getLanguageResource('Chat_YouClearedFlag');
+    //    }
 
-        ui.addNotificationToActiveRoom(message);
-    };
+    //    ui.addNotificationToActiveRoom(message);
+    //};
 
-    // Make sure all the people in the all the rooms know that a user has changed their flag
-    chat.client.changeFlag = function (user, room) {
-        var viewModel = getUserViewModel(user),
-            message;
+    //// Make sure all the people in the all the rooms know that a user has changed their flag
+    //chat.client.changeFlag = function (user, room) {
+    //    var viewModel = getUserViewModel(user),
+    //        message;
 
-        ui.changeFlag(viewModel, room);
+    //    ui.changeFlag(viewModel, room);
 
-        if (!isSelf(user)) {
-            if (user.Flag) {
-                message = utility.getLanguageResource('Chat_UserSetFlag', user.Name, viewModel.country);
-            } else {
-                message = utility.getLanguageResource('Chat_UserClearedFlag', user.Name);
-            }
+    //    if (!isSelf(user)) {
+    //        if (user.Flag) {
+    //            message = utility.getLanguageResource('Chat_UserSetFlag', user.Name, viewModel.country);
+    //        } else {
+    //            message = utility.getLanguageResource('Chat_UserClearedFlag', user.Name);
+    //        }
 
-            ui.addNotification(message, room);
-        }
-    };
+    //        ui.addNotification(message, room);
+    //    }
+    //};
 
-    chat.client.userNameChanged = function (user) {
-        // Update the client state
-        chat.state.name = user.Name;
-        ui.setUserName(chat.state.name);
-        ui.addNotificationToActiveRoom(utility.getLanguageResource('Chat_YourNameChanged', user.Name));
-    };
+    //chat.client.userNameChanged = function (user) {
+    //    // Update the client state
+    //    chat.state.name = user.Name;
+    //    ui.setUserName(chat.state.name);
+    //    ui.addNotificationToActiveRoom(utility.getLanguageResource('Chat_YourNameChanged', user.Name));
+    //};
 
-    chat.client.setTyping = function (user, room) {
-        var viewModel = getUserViewModel(user);
-        ui.setUserTyping(viewModel, room);
-    };
+    //chat.client.setTyping = function (user, room) {
+    //    var viewModel = getUserViewModel(user);
+    //    ui.setUserTyping(viewModel, room);
+    //};
 
-    chat.client.sendMeMessage = function (name, message, room) {
-        ui.addAction(utility.getLanguageResource('Chat_UserPerformsAction', name, message), room);
-    };
+    //chat.client.sendMeMessage = function (name, message, room) {
+    //    ui.addAction(utility.getLanguageResource('Chat_UserPerformsAction', name, message), room);
+    //};
 
-    chat.client.sendPrivateMessage = function (from, to, message) {
-        if (isSelf({ Name: to })) {
-            // Force notification for direct messages
-            ui.notify(true);
-            ui.setLastPrivate(from);
-        }
+    //chat.client.sendPrivateMessage = function (from, to, message) {
+    //    if (isSelf({ Name: to })) {
+    //        // Force notification for direct messages
+    //        ui.notify(true);
+    //        ui.setLastPrivate(from);
+    //    }
 
-        ui.addPrivateMessage(utility.getLanguageResource('Chat_PrivateMessage', from, to, message));
-    };
+    //    ui.addPrivateMessage(utility.getLanguageResource('Chat_PrivateMessage', from, to, message));
+    //};
 
-    chat.client.sendInvite = function (from, to, room) {
-        if (isSelf({ Name: to })) {
-            ui.notify(true);
-            ui.addPrivateMessage(utility.getLanguageResource('Chat_UserInvitedYouToRoom', from, room));
-        }
-        else {
-            ui.addPrivateMessage(utility.getLanguageResource('Chat_YouInvitedUserToRoom', to, room));
-        }
-    };
+    //chat.client.sendInvite = function (from, to, room) {
+    //    if (isSelf({ Name: to })) {
+    //        ui.notify(true);
+    //        ui.addPrivateMessage(utility.getLanguageResource('Chat_UserInvitedYouToRoom', from, room));
+    //    }
+    //    else {
+    //        ui.addPrivateMessage(utility.getLanguageResource('Chat_YouInvitedUserToRoom', to, room));
+    //    }
+    //};
 
-    chat.client.nudge = function (from, to, roomName) {
-        var message;
+    //chat.client.nudge = function (from, to, roomName) {
+    //    var message;
 
-        function shake(n) {
-            var move = function (x, y) {
-                parent.moveBy(x, y);
-            };
-            for (var i = n; i > 0; i--) {
-                for (var j = 1; j > 0; j--) {
-                    move(i, 0);
-                    move(0, -i);
-                    move(-i, 0);
-                    move(0, i);
-                    move(i, 0);
-                    move(0, -i);
-                    move(-i, 0);
-                    move(0, i);
-                    move(i, 0);
-                    move(0, -i);
-                    move(-i, 0);
-                    move(0, i);
-                }
-            }
-        }
-        // the method is called if we're the sender, or recipient of a nudge.
-        if (!isSelf({ Name: from })) {
-            $("#chat-area").pulse({ opacity: 0 }, { duration: 300, pulses: 3 });
-            window.setTimeout(function () {
-                shake(20);
-            }, 300);
-        }
+    //    function shake(n) {
+    //        var move = function (x, y) {
+    //            parent.moveBy(x, y);
+    //        };
+    //        for (var i = n; i > 0; i--) {
+    //            for (var j = 1; j > 0; j--) {
+    //                move(i, 0);
+    //                move(0, -i);
+    //                move(-i, 0);
+    //                move(0, i);
+    //                move(i, 0);
+    //                move(0, -i);
+    //                move(-i, 0);
+    //                move(0, i);
+    //                move(i, 0);
+    //                move(0, -i);
+    //                move(-i, 0);
+    //                move(0, i);
+    //            }
+    //        }
+    //    }
+    //    // the method is called if we're the sender, or recipient of a nudge.
+    //    if (!isSelf({ Name: from })) {
+    //        $("#chat-area").pulse({ opacity: 0 }, { duration: 300, pulses: 3 });
+    //        window.setTimeout(function () {
+    //            shake(20);
+    //        }, 300);
+    //    }
 
-        if (to) {
-            if (isSelf({ Name: to })) {
-                message = utility.getLanguageResource('Chat_UserNudgedYou', from);
+    //    if (to) {
+    //        if (isSelf({ Name: to })) {
+    //            message = utility.getLanguageResource('Chat_UserNudgedYou', from);
                 
-                var toastMessage = {
-                    message: message,
-                    name: from
-                };
-                ui.nudge(toastMessage, from);
-            } else {
-                message = utility.getLanguageResource('Chat_UserNudgedUser', from, to);
-            }
+    //            var toastMessage = {
+    //                message: message,
+    //                name: from
+    //            };
+    //            ui.nudge(toastMessage, from);
+    //        } else {
+    //            message = utility.getLanguageResource('Chat_UserNudgedUser', from, to);
+    //        }
 
-            // TODO: make this more consistent (ie make it a broadcast, proper pm to all rooms, or something)
-            ui.addPrivateMessage(message);
-        } else {
-            ui.addPrivateMessage(utility.getLanguageResource('Chat_UserNudgedRoom', from, roomName));
-        }
-    };
+    //        // TODO: make this more consistent (ie make it a broadcast, proper pm to all rooms, or something)
+    //        ui.addPrivateMessage(message);
+    //    } else {
+    //        ui.addPrivateMessage(utility.getLanguageResource('Chat_UserNudgedRoom', from, roomName));
+    //    }
+    //};
 
-    chat.client.leave = function (user, room) {
-        if (isSelf(user)) {
-            ui.setRoomLoading(false);
-            if (chat.state.activeRoom === room) {
-                ui.setActiveRoom('Lobby');
-            }
+    //chat.client.leave = function (user, room) {
+    //    if (isSelf(user)) {
+    //        ui.setRoomLoading(false);
+    //        if (chat.state.activeRoom === room) {
+    //            ui.setActiveRoom('Lobby');
+    //        }
             
-            ui.removeRoom(room);
-        }
-        else {
+    //        ui.removeRoom(room);
+    //    }
+    //    else {
 
-            ui.removeUser(user, room);
-            ui.addNotification(utility.getLanguageResource('Chat_UserLeftRoom', user.Name, room), room);
-        }
-    };
+    //        ui.removeUser(user, room);
+    //        ui.addNotification(utility.getLanguageResource('Chat_UserLeftRoom', user.Name, room), room);
+    //    }
+    //};
 
-    chat.client.kick = function (user, room, callingUser, reason) {
-        if (isSelf(user)) {
-            var title = utility.getLanguageResource('Chat_YouKickedTitle'),
-                message;
+    //chat.client.kick = function (user, room, callingUser, reason) {
+    //    if (isSelf(user)) {
+    //        var title = utility.getLanguageResource('Chat_YouKickedTitle'),
+    //            message;
             
-            if (chat.state.activeRoom === room) {
-                ui.setActiveRoom('Lobby');
-            }
+    //        if (chat.state.activeRoom === room) {
+    //            ui.setActiveRoom('Lobby');
+    //        }
 
-            ui.removeRoom(room);
+    //        ui.removeRoom(room);
 
-            if (reason !== null) {
-                message = utility.getLanguageResource('Chat_YouKickedFromRoomReason', room, callingUser.Name, reason);
-            } else {
-                message = utility.getLanguageResource('Chat_YouKickedFromRoom', room, callingUser.Name);
-            }
+    //        if (reason !== null) {
+    //            message = utility.getLanguageResource('Chat_YouKickedFromRoomReason', room, callingUser.Name, reason);
+    //        } else {
+    //            message = utility.getLanguageResource('Chat_YouKickedFromRoom', room, callingUser.Name);
+    //        }
 
-            ui.addModalMessage(title, message, 'icon-ban-circle');
-        } else {
-            ui.removeUser(user, room);
+    //        ui.addModalMessage(title, message, 'icon-ban-circle');
+    //    } else {
+    //        ui.removeUser(user, room);
 
-            if (reason !== null) {
-                ui.addNotification(utility.getLanguageResource('Chat_UserKickedFromRoomReason', user.Name, room, callingUser.Name, reason), room);
-            } else {
-                ui.addNotification(utility.getLanguageResource('Chat_UserKickedFromRoom', user.Name, room, callingUser.Name), room);
-            }
-        }
-    };
+    //        if (reason !== null) {
+    //            ui.addNotification(utility.getLanguageResource('Chat_UserKickedFromRoomReason', user.Name, room, callingUser.Name, reason), room);
+    //        } else {
+    //            ui.addNotification(utility.getLanguageResource('Chat_UserKickedFromRoom', user.Name, room, callingUser.Name), room);
+    //        }
+    //    }
+    //};
 
-    // Helpish commands
-    chat.client.showCommands = function () {
-        ui.showHelp();
-    };
+    //// Helpish commands
+    //chat.client.showCommands = function () {
+    //    ui.showHelp();
+    //};
 
-    chat.client.showUsersInRoom = function (room, names) {
-        var header = utility.getLanguageResource('Chat_RoomUsersHeader', room);
-        if (names.length === 0) {
-            ui.addListToActiveRoom(header, [utility.getLanguageResource('Chat_RoomUsersEmpty')]);
-        } else {
-            ui.addListToActiveRoom(header, $.map(names, function (name) {
-                return '- ' + name;
-            }));
-        }
-    };
+    //chat.client.showUsersInRoom = function (room, names) {
+    //    var header = utility.getLanguageResource('Chat_RoomUsersHeader', room);
+    //    if (names.length === 0) {
+    //        ui.addListToActiveRoom(header, [utility.getLanguageResource('Chat_RoomUsersEmpty')]);
+    //    } else {
+    //        ui.addListToActiveRoom(header, $.map(names, function (name) {
+    //            return '- ' + name;
+    //        }));
+    //    }
+    //};
 
-    chat.client.listUsers = function (users) {
-        if (users.length === 0) {
-            ui.addListToActiveRoom(utility.getLanguageResource('Chat_RoomSearchEmpty'), []);
-        } else {
-            ui.addListToActiveRoom(utility.getLanguageResource('Chat_RoomSearchResults'), [users.join(', ')]);
-        }
-    };
+    //chat.client.listUsers = function (users) {
+    //    if (users.length === 0) {
+    //        ui.addListToActiveRoom(utility.getLanguageResource('Chat_RoomSearchEmpty'), []);
+    //    } else {
+    //        ui.addListToActiveRoom(utility.getLanguageResource('Chat_RoomSearchResults'), [users.join(', ')]);
+    //    }
+    //};
 
-    chat.client.listAllowedUsers = function (room, isPrivate, users) {
-        if (!isPrivate) {
-            ui.addListToActiveRoom(utility.getLanguageResource('Chat_RoomNotPrivateAllowed', room), []);
-        } else if (users.length === 0) {
-            ui.addListToActiveRoom(utility.getLanguageResource('Chat_RoomPrivateNoUsersAllowed', room), []);
-        } else {
-            ui.addListToActiveRoom(utility.getLanguageResource('Chat_RoomPrivateUsersAllowedResults', room), [users.join(', ')]);
-        }
-    };
+    //chat.client.listAllowedUsers = function (room, isPrivate, users) {
+    //    if (!isPrivate) {
+    //        ui.addListToActiveRoom(utility.getLanguageResource('Chat_RoomNotPrivateAllowed', room), []);
+    //    } else if (users.length === 0) {
+    //        ui.addListToActiveRoom(utility.getLanguageResource('Chat_RoomPrivateNoUsersAllowed', room), []);
+    //    } else {
+    //        ui.addListToActiveRoom(utility.getLanguageResource('Chat_RoomPrivateUsersAllowedResults', room), [users.join(', ')]);
+    //    }
+    //};
 
-    chat.client.listOwners = function (room, users, creator) {
-        if (users.length === 0) {
-            ui.addListToActiveRoom(utility.getLanguageResource('Chat_RoomOwnersEmpty', room), []);
-        } else {
-            // we don't want admins or owners tagged, so we don't provide them.
-            users = utility.tagUsers(users, null, null, null, creator);
-            ui.addListToActiveRoom(utility.getLanguageResource('Chat_RoomOwnersResults', room), [users.join(', ')]);
-        }
-    };
+    //chat.client.listOwners = function (room, users, creator) {
+    //    if (users.length === 0) {
+    //        ui.addListToActiveRoom(utility.getLanguageResource('Chat_RoomOwnersEmpty', room), []);
+    //    } else {
+    //        // we don't want admins or owners tagged, so we don't provide them.
+    //        users = utility.tagUsers(users, null, null, null, creator);
+    //        ui.addListToActiveRoom(utility.getLanguageResource('Chat_RoomOwnersResults', room), [users.join(', ')]);
+    //    }
+    //};
 
-    chat.client.showUsersRoomList = function (user, rooms) {
-        if (rooms.length === 0) {
-            ui.addListToActiveRoom(utility.getLanguageResource('Chat_UserNotInRooms', user.Name, user.Status), []);
-        }
-        else {
-            ui.addListToActiveRoom(utility.getLanguageResource('Chat_UserInRooms', user.Name, user.Status), [rooms.join(', ')]);
-        }
-    };
+    //chat.client.showUsersRoomList = function (user, rooms) {
+    //    if (rooms.length === 0) {
+    //        ui.addListToActiveRoom(utility.getLanguageResource('Chat_UserNotInRooms', user.Name, user.Status), []);
+    //    }
+    //    else {
+    //        ui.addListToActiveRoom(utility.getLanguageResource('Chat_UserInRooms', user.Name, user.Status), [rooms.join(', ')]);
+    //    }
+    //};
 
-    chat.client.showUsersOwnedRoomList = function (user, rooms) {
-        if (rooms.length === 0) {
-            ui.addListToActiveRoom(utility.getLanguageResource('Chat_UserOwnsNoRooms', user), []);
-        }
-        else {
-            ui.addListToActiveRoom(utility.getLanguageResource('Chat_UserOwnsRooms', user), [rooms.join(', ')]);
-        }
-    };
+    //chat.client.showUsersOwnedRoomList = function (user, rooms) {
+    //    if (rooms.length === 0) {
+    //        ui.addListToActiveRoom(utility.getLanguageResource('Chat_UserOwnsNoRooms', user), []);
+    //    }
+    //    else {
+    //        ui.addListToActiveRoom(utility.getLanguageResource('Chat_UserOwnsRooms', user), [rooms.join(', ')]);
+    //    }
+    //};
 
-    chat.client.addAdmin = function (user, room) {
-        ui.setRoomAdmin(user.Name, room);
-    };
+    //chat.client.addAdmin = function (user, room) {
+    //    ui.setRoomAdmin(user.Name, room);
+    //};
 
-    chat.client.removeAdmin = function (user, room) {
-        ui.clearRoomAdmin(user.Name, room);
-    };
+    //chat.client.removeAdmin = function (user, room) {
+    //    ui.clearRoomAdmin(user.Name, room);
+    //};
 
-    // Called when you make someone an admin
-    chat.client.adminMade = function (user) {
-        ui.addNotificationToActiveRoom(utility.getLanguageResource('Chat_UserAdminAllowed', user));
-    };
+    //// Called when you make someone an admin
+    //chat.client.adminMade = function (user) {
+    //    ui.addNotificationToActiveRoom(utility.getLanguageResource('Chat_UserAdminAllowed', user));
+    //};
 
-    chat.client.adminRemoved = function (user) {
-        ui.addNotificationToActiveRoom(utility.getLanguageResource('Chat_UserAdminRevoked', user));
-    };
+    //chat.client.adminRemoved = function (user) {
+    //    ui.addNotificationToActiveRoom(utility.getLanguageResource('Chat_UserAdminRevoked', user));
+    //};
 
-    // Called when you've been made an admin
-    chat.client.makeAdmin = function () {
-        ui.addNotificationToActiveRoom(utility.getLanguageResource('Chat_YouAdminAllowed'));
-    };
+    //// Called when you've been made an admin
+    //chat.client.makeAdmin = function () {
+    //    ui.addNotificationToActiveRoom(utility.getLanguageResource('Chat_YouAdminAllowed'));
+    //};
 
-    // Called when you've been removed as an admin
-    chat.client.demoteAdmin = function () {
-        ui.addNotificationToActiveRoom(utility.getLanguageResource('Chat_YouAdminRevoked'));
-    };
+    //// Called when you've been removed as an admin
+    //chat.client.demoteAdmin = function () {
+    //    ui.addNotificationToActiveRoom(utility.getLanguageResource('Chat_YouAdminRevoked'));
+    //};
 
-    chat.client.broadcastMessage = function (message, room) {
-        ui.addBroadcast(utility.getLanguageResource('Chat_AdminBroadcast', message), room);
-    };
+    //chat.client.broadcastMessage = function (message, room) {
+    //    ui.addBroadcast(utility.getLanguageResource('Chat_AdminBroadcast', message), room);
+    //};
 
-    chat.client.outOfSync = function () {
-        ui.showUpdateUI();
-    };
+    //chat.client.outOfSync = function () {
+    //    ui.showUpdateUI();
+    //};
 
-    chat.client.updateUnreadNotifications = function (read) {
-        ui.setUnreadNotifications(read);
-    };
+    //chat.client.updateUnreadNotifications = function (read) {
+    //    ui.setUnreadNotifications(read);
+    //};
 
-    chat.client.updateTabOrder = function (tabOrder) {
-        ui.updateTabOrder(tabOrder);
-    };
+    //chat.client.updateTabOrder = function (tabOrder) {
+    //    ui.updateTabOrder(tabOrder);
+    //};
 
     $ui.bind(ui.events.typing, function () {
         // If not in a room, don't try to send typing notifications
@@ -1308,13 +1312,14 @@
                 options.transport = transport;
             }
 
-            connection.hub.logging = logging;
-            connection.hub.qs = "version=" + window.jabbrVersion;
-            connection.hub.start(options)
-                          .done(function () {
-
-                              chat.server.join()
-                                  .fail(function () {
+            connection.logging = logging;
+            connection.qs = "version=" + window.jabbrVersion;
+            connection.start()
+                          .then(function () {
+                              debugger;
+                              chat.invoke("join")
+                                  .catch(function (ex) {
+                                      debugger;
                                       // So refresh the page, our auth token is probably gone
                                       performLogout();
                                   });
@@ -1322,7 +1327,7 @@
                               initialized = true;
                           });
 
-            connection.hub.stateChanged(function (change) {
+            connection.on("stateChanged",function (change) {
                 if (change.newState === $.connection.connectionState.reconnecting) {
                     failPendingMessages();
 
@@ -1343,7 +1348,7 @@
                 }
             });
 
-            connection.hub.disconnected(function () {
+            connection.on("disconnected",function () {
                 if (initialized === true) {
                     connection.hub.log('Dropped the connection from the server. Restarting in 5 seconds.');
 
@@ -1355,13 +1360,14 @@
 
                 // Restart the connection
                 setTimeout(function () {
-                    connection.hub.start(options)
-                                  .done(function () {
+                    connection.start(options)
+                        .then(function () {
                                       // When this works uncomment it.
                                       // ui.showReloadMessageNotification();
 
-                                      // Turn the firehose back on
-                                      chat.server.join(initialized).fail(function () {
+                            // Turn the firehose back on
+                            chat.invoke("join", initialized).catch(function (ex) {
+                                debugger;
                                           // So refresh the page, our auth token is probably gone
                                           performLogout();
                                       });
@@ -1371,7 +1377,7 @@
                 }, 5000);
             });
 
-            connection.hub.error(function () {
+            connection.on("error",function () {
                 // Make all pending messages failed if there's an error
                 failPendingMessages();
             });
@@ -1380,4 +1386,4 @@
         initConnection();
     });
 
-})(window.jQuery, window.jQuery.connection, window, window.chat.ui, window.chat.utility);
+})(window.jQuery, myNewHubConnection, window, window.chat.ui, window.chat.utility);

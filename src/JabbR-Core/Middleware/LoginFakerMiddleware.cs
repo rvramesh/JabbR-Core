@@ -4,6 +4,7 @@ using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using JabbR_Core.Infrastructure;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Authentication;
 using Microsoft.Extensions.Logging;
@@ -35,7 +36,7 @@ namespace JabbR_Core.Controllers
                 claims.Add(new Claim(JabbRClaimTypes.Identifier, "1"));
                 var claimsIdentity = new ClaimsIdentity(claims, Constants.JabbRAuthType);
                 var claimsPrincipal = new ClaimsPrincipal(claimsIdentity);
-                await context.Authentication.SignInAsync(Constants.JabbRAuthType, claimsPrincipal);
+                await context.SignInAsync(Constants.JabbRAuthType, claimsPrincipal);
             }
             await _next.Invoke(context);
         }

@@ -66,7 +66,7 @@ namespace JabbR_Core
             //If not running in Development (ie the env variable ASPNETCORE_ENVIRONMENT!=DEVELOPMENT) then the format to set at cmd line (on Windows)
             //set connectionString=Server=(localdb)\mssqllocaldb;Database=aspnet-application;Trusted_Connection=True;MultipleActiveResultSets=true
 
-            services.AddDbContext<JabbrContext>(options => /*options.UseInMemoryDatabase()*/ options.UseSqlServer(connection));
+            //services.AddDbContext<JabbrContext>(options => /*options.UseInMemoryDatabase()*/ options.UseSqlServer(connection));
 
             //services.AddEntityFrameworkInMemoryDatabase();
             //services.AddDbContext<JabbrContext>();
@@ -81,7 +81,7 @@ namespace JabbR_Core
             //        .UseInMemoryDatabase();
             //    });
 
-            //services.AddDbContext<JabbrContext>(options => options.UseSqlServer(connection));
+            services.AddDbContext<JabbrContext>(options => options.UseSqlServer(connection));
 
             services.AddAuthorization();
             services.AddMvc(options =>
@@ -116,7 +116,7 @@ namespace JabbR_Core
 
             services.AddTransient<IEmailSender, AuthMessageSender>();  
             services.Configure<AuthMessageSenderOptions>(_configuration);
-
+            services.AddAuthentication().AddCookie();
             //SignalR currently doesn't use DI to resolve hubs. This will allow it.
            // services.AddSingleton<IHubActivator, DefaultHubActivator>();
             // This code has no effects right now, Chat hubs aren't called via DI
@@ -174,7 +174,7 @@ namespace JabbR_Core
             loggerFactory.AddConsole();
             app.UseStaticFiles();
 
-            app.UseIdentity();
+            app.UseAuthentication();
             // app.UseFacebookAuthentication(new FacebookOptions()
             // {
             //     AppId = _configuration["Authentication:Facebook:AppId"],
