@@ -2162,7 +2162,7 @@
         },
         setCommands: function (commands) {
             ui.commands = commands.sort(function (a, b) {
-                return a.Name.toString().toUpperCase().localeCompare(b.Name.toString().toUpperCase());
+                return a.name.toString().toUpperCase().localeCompare(b.name.toString().toUpperCase());
             });
 
             ui.commandsLookup = {};

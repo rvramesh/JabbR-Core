@@ -23,10 +23,6 @@ namespace JabbR_Core.Hubs
         public ClientMessage clientMessage { get; set; }
         public string roomName { get; set; }
         public string content { get; set; }
-        public SendClass()
-        {
-            this.clientMessage = new ClientMessage();
-        }
     }
 
     public class Chat : DynamicHub, INotificationService
@@ -72,15 +68,14 @@ namespace JabbR_Core.Hubs
         //    Join(reconnecting: false);
         //}
 
-        public void Join(bool? reconnecting)
+        public void Join(bool reconnecting=false)
         {
             // Get the client state
             var userId = Context.User.GetUserId();
-            reconnecting = reconnecting.HasValue ? reconnecting.Value : false;
             // Try to get the user from the client state
             ChatUser user = _repository.GetUserById(userId);
 
-            if (reconnecting.Value)
+            if (reconnecting)
             {
                 // If the user was marked as offline then mark them inactive
                 if (user.Status == (int)UserStatus.Offline)
@@ -110,7 +105,7 @@ namespace JabbR_Core.Hubs
             var userViewModel = new UserViewModel(user);
             Clients.Caller.userNameChanged(userViewModel);
 
-            OnUserInitialize(clientState, user, reconnecting.Value);
+            OnUserInitialize(clientState, user, reconnecting);
         }
 
         public List<LobbyRoomViewModel> GetRooms()
