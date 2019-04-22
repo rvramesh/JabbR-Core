@@ -379,7 +379,7 @@ namespace JabbR_Core.Hubs
 
             // Notify users of the room count change
             OnRoomChanged(room);
-
+            Groups.AddToGroupAsync(Context.ConnectionId, room.Name);
             foreach (var client in user.ConnectedClients)
             {
                 Groups.AddToGroupAsync(client.Id, room.Name);

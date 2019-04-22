@@ -11,8 +11,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="description" content="A real-time chat application." />
     <meta name="keywords" content="chat,realtime chat,signalr,jabbr" />
-    <link href="~/Content/images/logo32.png" rel="icon" type="image/png" sizes="32x32">
-    <link href="~/Content/images/logo64.png" rel="icon" type="image/png" sizes="64x64">
+    <link href="~/images/logo32.png" rel="icon" type="image/png" sizes="32x32">
+    <link href="~/images/logo64.png" rel="icon" type="image/png" sizes="64x64">
     <link href="~/favicon.ico" rel="shortcut icon" type="image/x-icon" sizes="16x16">
     <link href="~/lib/bootstrap/css/bootstrap-responsive.css" rel="stylesheet" />
     <link href="~/lib/bootstrap/css/bootstrap.css" rel="stylesheet" />
@@ -24,8 +24,8 @@
     <link rel="stylesheet" href="~/lib/highlight/css/github.css" />
     <link href="~/css/KeyTips.css" rel="stylesheet" />
     <link href="~/css/emoji20.css" rel="stylesheet" />
-    <link href="~/font/font-awesome.min.css" rel="stylesheet" />
-   
+    @*<link href="~/Content/font-awesome.css" rel="stylesheet" />*@
+
 
     @if (!String.IsNullOrEmpty(Model.GoogleAnalytics))
     {
@@ -49,17 +49,17 @@
     {
         <script type="text/javascript">
             window.appInsights={queue:[],applicationInsightsId:null,accountId:null,appUserId:null,configUrl:null,start:function(n){function u(n){t[n]=function(){var i=arguments;t.queue.push(function(){t[n].apply(t,i)})}}function f(n,t){if(n){var u=r.createElement(i);u.type="text/javascript";u.src=n;u.async=!0;u.onload=t;u.onerror=t;r.getElementsByTagName(i)[0].parentNode.appendChild(u)}else t()}var r=document,t=this,i;t.applicationInsightsId=n;u("logEvent");u("logPageView");i="script";f(t.configUrl,function(){f("//az416426.vo.msecnd.net/scripts/a/ai.0.7.js")});t.start=function(){}}};
-    
+
             appInsights.start("@Model.AppInsights");
             appInsights.logPageView();
         </script>
     }
-    
+
     <environment names="Development">
-            <script src="~/lib/jquery/jquery-2.2.4.min.js"></script>
-        </environment>
+        <script src="~/lib/jquery/jquery-2.2.4.min.js"></script>
+    </environment>
     <environment names="Staging,Production">
-        <script src="https://code.jquery.com/jquery-2.2.4.min.js"  integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44=" crossorigin="anonymous"></script>
+        <script src="https://code.jquery.com/jquery-2.2.4.min.js" integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44=" crossorigin="anonymous"></script>
     </environment>
 
     <environment names="Development">
@@ -69,7 +69,7 @@
     <environment names="Staging,Production">
         <script src="~/Scripts/signalr.min.js" crossorigin="anonymous"></script>
         @*<script src="http://ajax.aspnetcdn.com/ajax/signalr/jquery.signalr-2.2.1.js" crossorigin="anonymous"></script>
-        </script>*@
+            </script>*@
     </environment>
     @*<script src="signalr/hubs"></script>*@
 
@@ -77,7 +77,7 @@
     @* Load jQuery templates *@
     @Html.Partial("Partials/Templates/CommandConfirm");
     @Html.Partial("Partials/Templates/CommandHelp");
-    @Html.Partial("Partials/Templates/GitHubIssues");    
+    @Html.Partial("Partials/Templates/GitHubIssues");
     @Html.Partial("Partials/Templates/GitHubIssuesComment");
     @Html.Partial("Partials/Templates/GravatarProfile");
     @Html.Partial("Partials/Templates/MessageSeparator");
