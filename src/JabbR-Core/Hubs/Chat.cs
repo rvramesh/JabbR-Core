@@ -68,7 +68,7 @@ namespace JabbR_Core.Hubs
         //    Join(reconnecting: false);
         //}
 
-        public void Join(bool reconnecting=false)
+        public void Join(bool reconnecting = false)
         {
             // Get the client state
             var userId = Context.User.GetUserId();
@@ -125,6 +125,23 @@ namespace JabbR_Core.Hubs
         public IEnumerable<CommandMetaData> GetCommands()
         {
             return CommandManager.GetCommandsMetaData();
+        }
+        public void Typing(string roomName)
+        {
+            string userId = Context.User.GetUserId();
+
+            ChatUser user = _repository.GetUserById(userId);
+            ChatRoom room = _repository.VerifyUserRoom(_cache, user, roomName);
+
+            if (room == null || (room.Private && !user.AllowedRooms.Any(i=>i.ChatRoomKeyNavigation.Name == room.Name)))
+            {
+                return;
+            }
+
+            UpdateActivity(user, room);
+
+            var userViewModel = new UserViewModel(user);
+            Clients.Group(room.Name).setTyping(userViewModel, room.Name);
         }
 
         // More specific return type? Object[]? or cast to Array?
@@ -217,30 +234,29 @@ namespace JabbR_Core.Hubs
         //    return Send(message);
         //}
 
-        public bool Send(SendClass clientMessage)
+        public bool Send(string content="",string roomName="",string conId = "")
         {
             //Commented out for resting purposes
             // TODO: set env variable
             //CheckStatus();
 
-            if (clientMessage.clientMessage == null)
+
+            var message = new ClientMessage
             {
-                var message = new ClientMessage
-                {
-                    Content = clientMessage.content,  // '/join light_meow'
-                    Room = clientMessage.roomName,    // 'Lobby'
-                };
-                clientMessage.clientMessage = message;
-            }
+                Content = content,  // '/join light_meow'
+                Room = roomName,    // 'Lobby'
+                Id = conId
+            };
+            var clientMessage = message;
 
             //reject it if it's too long
-            if (_settings.MaxMessageLength > 0 && clientMessage.clientMessage.Content.Length > _settings.MaxMessageLength)
+            if (_settings.MaxMessageLength > 0 && clientMessage.Content.Length > _settings.MaxMessageLength)
             {
                 throw new HubException(String.Format(LanguageResources.SendMessageTooLong, _settings.MaxMessageLength));
             }
 
             //See if this is a valid command (starts with /)
-            if (TryHandleCommand(clientMessage.clientMessage.Content, clientMessage.clientMessage.Room))
+            if (TryHandleCommand(clientMessage.Content, clientMessage.Room))
             {
                 return true;
             }
@@ -250,7 +266,7 @@ namespace JabbR_Core.Hubs
             ChatUser user = _repository.VerifyUserId(userId);
 
             // this line breaks when we message in a new room
-            ChatRoom room = _repository.VerifyUserRoom(_cache, user, clientMessage.clientMessage.Room);
+            ChatRoom room = _repository.VerifyUserRoom(_cache, user, clientMessage.Room);
 
             if (room == null || (room.Private && user.AllowedRooms.Select(r => r.ChatRoomKeyNavigation).ToList().Contains(room)))
             {
@@ -260,7 +276,7 @@ namespace JabbR_Core.Hubs
             // REVIEW: Is it better to use the extension method room.EnsureOpen here?
             if (room.Closed)
             {
-                throw new HubException(String.Format(LanguageResources.SendMessageRoomClosed, clientMessage.clientMessage.Room));
+                throw new HubException(String.Format(LanguageResources.SendMessageRoomClosed, clientMessage.Room));
             }
 
             // Update activity *after* ensuring the user, this forces them to be active
@@ -270,7 +286,7 @@ namespace JabbR_Core.Hubs
             string id = Guid.NewGuid().ToString("d");
 
             // Ensure the message is logged
-            ChatMessage chatMessage = _chatService.AddMessage(user, room, id, clientMessage.clientMessage.Content);
+            ChatMessage chatMessage = _chatService.AddMessage(user, room, id, clientMessage.Content);
             room.ChatMessages.Add(chatMessage);
 
             // Save changes
@@ -279,7 +295,7 @@ namespace JabbR_Core.Hubs
 
             var messageViewModel = new MessageViewModel(chatMessage);
 
-            if (clientMessage.clientMessage.Id == null)
+            if (clientMessage.Id == null)
             {
                 // If the client didn't generate an id for the message then just
                 // send it to everyone. The assumption is that the client has some ui
@@ -293,7 +309,7 @@ namespace JabbR_Core.Hubs
                 Clients.OthersInGroup(room.Name).addMessage(messageViewModel, room.Name);
 
                 // Now tell the caller to replace the message
-                Clients.Caller.replaceMessage(clientMessage.clientMessage.Id, messageViewModel, room.Name);
+                Clients.Caller.replaceMessage(clientMessage.Id, messageViewModel, room.Name);
             }
 
             // Add mentions
@@ -847,7 +863,7 @@ namespace JabbR_Core.Hubs
             {
                 clientMessage = m
             };
-            Send(s);
+            Send(message, room.Name);
         }
 
         void INotificationService.AddAdmin(ChatUser targetUser)

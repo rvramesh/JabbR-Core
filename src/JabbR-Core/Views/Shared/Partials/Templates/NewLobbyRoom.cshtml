@@ -1,10 +1,10 @@
 ﻿@using JabbR_Core;
 
 <script id="new-lobby-room-template" type="text/x-jquery-tmpl">
-    <li class="room {{if Private}}locked{{/if}} {{if Closed}}closed{{/if}}" data-room="${Name}" data-name="${Name}" data-count="${Count}">
+    <li class="room {{if private}}locked{{/if}} {{if closed}}closed{{/if}}" data-room="${name}" data-name="${name}" data-count="${Count}">
         <div class="row-fluid room-row">
             <div class="span3">
-                <span class="name">${Name}</span>
+                <span class="name">${name}</span>
                 <span class="lock"><i class="icon-lock"></i></span>
                 <span class="readonly"><i class="icon-ban-circle"></i></span>
             </div>
@@ -13,12 +13,12 @@
             </div>
             <div class="span2">
                 <span class="count">
-                    {{if Count == 0}}
+                    {{if count == 0}}
                     @LanguageResources.Client_OccupantsZero
-                    {{else Count == 1}}
+                    {{else count == 1}}
                     @LanguageResources.Client_OccupantsOne
                     {{else}}
-                    @String.Format(LanguageResources.Client_OccupantsMany, "${Count}")
+                    @String.Format(LanguageResources.Client_OccupantsMany, "${count}")
                     {{/if}}
                 </span>
             </div>

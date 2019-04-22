@@ -42,28 +42,28 @@ var myNewHubConnection = new signalR.HubConnectionBuilder()
     }
 
     function getNoteCssClass(user) {
-        if (user.IsAfk === true) {
+        if (user.isAfk === true) {
             return 'afk';
         }
-        else if (user.Note) {
+        else if (user.note) {
             return 'message';
         }
         return '';
     }
 
     function getNote(user) {
-        if (user.IsAfk === true) {
+        if (user.isAfk === true) {
             if (user.AfkNote) {
-                return 'AFK - ' + user.AfkNote;
+                return 'AFK - ' + user.afkNote;
             }
             return 'AFK';
         }
 
-        return user.Note;
+        return user.note;
     }
 
     function getFlagCssClass(user) {
-        return (user.Flag) ? 'flag flag-' + user.Flag : '';
+        return (user.flag) ? 'flag flag-' + user.flag : '';
     }
 
     function performLogout() {
@@ -72,8 +72,8 @@ var myNewHubConnection = new signalR.HubConnectionBuilder()
 
     function logout() {
         performLogout().done(function () {
-            chat.server.send('/logout', chat.stateVariables.activeRoom)
-                .fail(function (e) {
+            chat.invoke("send", '/logout', chat.stateVariables.activeRoom)
+                .catch(function (e) {
                     if (e.source === 'HubException') {
                         ui.addErrorToActiveRoom(e.message);
                     }
@@ -106,14 +106,14 @@ var myNewHubConnection = new signalR.HubConnectionBuilder()
 
         // Populate the list of users rooms and messages 
         chat.invoke("getRoomInfo", room)
-            .done(function (roomInfo) {
+            .then(function (roomInfo) {
                 console.log('getRoomInfo.done(' + room + ')');
 
                 populateRoomFromInfo(roomInfo);
 
                 deferred.resolveWith(chat);
             })
-            .fail(function (e) {
+            .catch(function (e) {
                 console.log('getRoomInfo.failed(' + room + ', ' + e + ')');
                 getRoomInfoRetries++;
                 if (getRoomInfoRetries < getRoomInfoMaxRetries) {
@@ -135,27 +135,27 @@ var myNewHubConnection = new signalR.HubConnectionBuilder()
     }
 
     function populateRoomFromInfo(roomInfo) {
-        var room = roomInfo.Name;
+        var room = roomInfo.name;
 
-        $.each(roomInfo.Users, function () {
+        $.each(roomInfo.users, function () {
             var userViewModel = getUserViewModel(this);
             ui.addUser(userViewModel, room);
             ui.setUserActivity(userViewModel);
         });
 
-        $.each(roomInfo.Owners, function () {
+        $.each(roomInfo.owners, function () {
             ui.setRoomOwner(this, room);
         });
 
         var messageIds = [];
-        $.each(roomInfo.RecentMessages, function () {
+        $.each(roomInfo.recentMessages, function () {
             var viewModel = getMessageViewModel(this);
 
             messageIds.push(viewModel.id);
             ui.addChatMessage(viewModel, room);
         });
 
-        ui.changeRoomTopic(roomInfo.Name, roomInfo.Topic);
+        ui.changeRoomTopic(roomInfo.name, roomInfo.topic);
 
         // mark room as initialized to differentiate messages
         // that are added after initial population
@@ -197,50 +197,50 @@ var myNewHubConnection = new signalR.HubConnectionBuilder()
     }
 
     function getUserViewModel(user, isOwner) {
-        var lastActive = user.LastActivity.fromJsonDate();
+        var lastActive = user.lastActivity.fromJsonDate();
         return {
-            name: user.Name,
-            hash: user.Hash,
+            name: user.name,
+            hash: user.hash,
             owner: isOwner,
-            active: user.Active,
+            active: user.active,
             noteClass: getNoteCssClass(user),
             note: getNote(user),
             flagClass: getFlagCssClass(user),
-            flag: user.Flag,
-            country: user.Country,
+            flag: user.flag,
+            country: user.country,
             lastActive: lastActive,
             timeAgo: $.timeago(lastActive),
-            admin: user.IsAdmin,
-            afk: user.IsAfk
+            admin: user.isAdmin,
+            afk: user.isAfk
         };
     }
 
     function getMessageViewModel(message) {
         var re = new RegExp("\\b@?" + chat.stateVariables.name.replace(/\./g, '\\.') + "\\b", "i");
         return {
-            name: message.User.Name,
-            hash: message.User.Hash,
-            message: message.HtmlEncoded ? message.Content : ui.processContent(message.Content),
-            htmlContent: message.HtmlContent,
-            id: message.Id,
-            date: message.When.fromJsonDate(),
-            highlight: re.test(message.Content) ? 'highlight' : '',
-            isOwn: re.test(message.User.name),
-            isMine: message.User.Name === chat.stateVariables.name,
-            imageUrl: message.ImageUrl,
-            source: message.Source,
-            messageType: message.MessageType,
-            presence: (message.UserRoomPresence || 'absent').toLowerCase(),
-            status: getMessageUserStatus(message.User).toLowerCase()
+            name: message.user.name,
+            hash: message.user.hash,
+            message: message.htmlEncoded ? message.content : ui.processContent(message.content),
+            htmlContent: message.htmlContent,
+            id: message.id,
+            date: message.when.fromJsonDate(),
+            highlight: re.test(message.content) ? 'highlight' : '',
+            isOwn: re.test(message.user.name),
+            isMine: message.user.Name === chat.stateVariables.name,
+            imageUrl: message.imageUrl,
+            source: message.source,
+            messageType: message.messageType,
+            presence: (message.userRoomPresence || 'absent').toLowerCase(),
+            status: getMessageUserStatus(message.user).toLowerCase()
         };
     }
 
     function getMessageUserStatus(user) {
-        if (user.Status === 'Active' && user.IsAfk === true) {
+        if (user.status === 'Active' && user.isAfk === true) {
             return 'Inactive';
         }
 
-        return (user.Status || 'Offline');
+        return (user.status || 'Offline');
     }
 
     // Save some stateVariables in a cookie
@@ -291,25 +291,25 @@ var myNewHubConnection = new signalR.HubConnectionBuilder()
 
     // When the /join command gets raised this is called
     chat.on("joinRoom", function (room) {
-        ui.setRoomLoading(true, room.Name);
+        ui.setRoomLoading(true, room.name);
         var added = ui.addRoom(room);
 
-        ui.setActiveRoom(room.Name);
+        ui.setActiveRoom(room.name);
 
-        if (room.Private) {
-            ui.setRoomLocked(room.Name);
+        if (room.private) {
+            ui.setRoomLocked(room.name);
         }
-        if (room.Closed) {
-            ui.setRoomClosed(room.Name);
+        if (room.closed) {
+            ui.setRoomClosed(room.name);
         }
 
         if (added) {
-            populateRoom(room.Name).done(function () {
+            populateRoom(room.name).then(function () {
                 ui.setRoomLoading(false);
-                ui.addNotification(utility.getLanguageResource('Chat_YouEnteredRoom', room.Name), room.Name);
+                ui.addNotification(utility.getLanguageResource('Chat_YouEnteredRoom', room.name), room.name);
 
-                if (room.Welcome) {
-                    ui.addWelcome(room.Welcome, room.Name);
+                if (room.welcome) {
+                    ui.addWelcome(room.welcome, room.name);
                 }
             });
         }
@@ -373,7 +373,7 @@ var myNewHubConnection = new signalR.HubConnectionBuilder()
 
         if (this.stateVariables.activeRoom) {
             // Always populate the active room first then load the other rooms so it looks fast :)
-            populateRoom(this.stateVariables.activeRoom).done(function () {
+            populateRoom(this.stateVariables.activeRoom).then(function () {
                 loadCommands();
                 populateLobbyRooms();
 
@@ -393,7 +393,7 @@ var myNewHubConnection = new signalR.HubConnectionBuilder()
         }
         else {
             // Populate the lobby first then everything else
-            populateLobbyRooms().done(function () {
+            populateLobbyRooms().then(function () {
                 loadCommands();
                 loadRooms();
 
@@ -630,7 +630,7 @@ var myNewHubConnection = new signalR.HubConnectionBuilder()
                 message = utility.getLanguageResource('Chat_YouBanned', callingUser.Name);
             }
 
-            ui.addModalMessage(title, message, 'icon-ban-circle').done(function() {
+            ui.addModalMessage(title, message, 'icon-ban-circle').then(function() {
                 performLogout();
             });
         } else {
@@ -807,9 +807,11 @@ var myNewHubConnection = new signalR.HubConnectionBuilder()
 
     chat.on("userNameChanged",function (user) {
          //Update the client stateVariables
-        chat.stateVariables.name = user.Name;
+        chat.stateVariables.name = user.name;
+        chat.stateVariables.hash = user.hash;
         ui.setUserName(chat.stateVariables.name);
-        ui.addNotificationToActiveRoom(utility.getLanguageResource('Chat_YourNameChanged', user.Name));
+        ui.setUserHash(chat.stateVariables.hash);
+        ui.addNotificationToActiveRoom(utility.getLanguageResource('Chat_YourNameChanged', user.name));
     });
 
     chat.on("setTyping",function(user, room) {
@@ -1054,7 +1056,7 @@ var myNewHubConnection = new signalR.HubConnectionBuilder()
 
             try {
                 ui.setRoomTrimmable(chat.stateVariables.activeRoom, typing);
-                chat.server.typing(chat.stateVariables.activeRoom);
+                chat.invoke("typing",chat.stateVariables.activeRoom);
             }
             catch (e) {
                 console.log('Failed to send via websockets');
@@ -1086,7 +1088,7 @@ var myNewHubConnection = new signalR.HubConnectionBuilder()
             // If there's a significant delay in getting the message sent
             // mark it as pending
             messageCompleteTimeout = window.setTimeout(function () {
-                if ($.connection.hub.stateVariables === $.connection.connectionState.reconnecting) {
+                if (connection.state === connection.connectionState.reconnecting) {
                     ui.failMessage(id);
                 }
                 else {
@@ -1100,7 +1102,7 @@ var myNewHubConnection = new signalR.HubConnectionBuilder()
         }
 
         try {
-            chat.invoke("send",clientMessage)
+            chat.invoke("send", clientMessage.content, clientMessage.room, clientMessage.id)
                 .then(function () {
                     if (messageCompleteTimeout) {
                         clearTimeout(messageCompleteTimeout);
@@ -1148,7 +1150,9 @@ var myNewHubConnection = new signalR.HubConnectionBuilder()
 
     $ui.bind(ui.events.openRoom, function (ev, room) {
         try {
-            chat.invoke("send", '/join ' + room, chat.stateVariables.activeRoom)
+            var content = '/join ' + room;
+            var id = "";
+            chat.invoke("send", content,room,id )
                 .catch(function (e) {
                     ui.setActiveRoom('Lobby');
                     if (e.source === 'HubException') {
@@ -1163,8 +1167,8 @@ var myNewHubConnection = new signalR.HubConnectionBuilder()
 
     $ui.bind(ui.events.closeRoom, function (ev, room) {
         try {
-            chat.server.send('/leave ' + room, chat.stateVariables.activeRoom)
-                .fail(function (e) {
+            chat.invoke("send", '/leave ' + room, chat.stateVariables.activeRoom)
+                .catch(function (e) {
                     if (e.source === 'HubException') {
                         ui.addErrorToActiveRoom(e.message);
                     }
@@ -1217,8 +1221,8 @@ var myNewHubConnection = new signalR.HubConnectionBuilder()
 
             ui.setRoomTrimmable(roomInfo.name, false);
             console.log('getPreviousMessages(' + roomInfo.name + ')');
-            chat.server.getPreviousMessages(roomInfo.messageId)
-                .done(function (messages) {
+            chat.invoke("getPreviousMessages",roomInfo.messageId)
+                .then(function (messages) {
                     console.log('getPreviousMessages.done(' + roomInfo.name + ')');
                     ui.prependChatMessages($.map(messages, getMessageViewModel), roomInfo.name);
                     window.setTimeout(function () {
@@ -1227,7 +1231,7 @@ var myNewHubConnection = new signalR.HubConnectionBuilder()
 
                     ui.setLoadingHistory(false);
                 })
-                .fail(function (e) {
+                .catch(function (e) {
                     console.log('getPreviousMessages.failed(' + roomInfo.name + ', ' + e + ')');
                     window.setTimeout(function () {
                         loadingHistory = false;
