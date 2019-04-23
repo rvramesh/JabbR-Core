@@ -1,5 +1,4 @@
 ﻿$(document).ready(function () {
-    console.log("jquery ready - delete me");
     $("#logoutLink").click(function () {
         console.log("Logout clicked");
         $("#logoutForm").submit();

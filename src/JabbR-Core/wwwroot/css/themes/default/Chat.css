@@ -38,7 +38,7 @@ form#send-message {
 }
 
 .jabbrLogo {
-    background-image: url('../../images/logo32.png');
+    background-image: url('../../../images/logo32.png');
     background-repeat: no-repeat;
     width: 32px;
     height: 32px;
@@ -596,7 +596,7 @@ canvas {
     }
 
     .users li.typing {
-        background-image: url('../../images/typing.png');
+        background-image: url('../../../images/typing.png');
         background-repeat: no-repeat;
         background-position: 10px 12px;
     }
@@ -3132,7 +3132,7 @@ h3.userlist-header {
 @media (max-width:700px) {
     .home #heading h1 {
         text-indent: -9999px;
-        background-image: url('../../images/logo32.png');
+        background-image: url('../../../images/logo32.png');
         width: 32px;
         height: 32px;
         margin-top: 0;

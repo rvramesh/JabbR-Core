@@ -38,7 +38,7 @@ form#send-message {
 }
 
 .jabbrLogo {
-    background-image: url('../../images/logo32.png');
+    background-image: url('../wwwroot/images/logo32.png');
     background-repeat: no-repeat;
     width: 32px;
     height: 32px;
@@ -596,7 +596,7 @@ canvas {
     }
 
     .users li.typing {
-        background-image: url('../../images/typing.png');
+        background-image: url('../wwwroot/images/typing.png');
         background-repeat: no-repeat;
         background-position: 10px 12px;
     }
@@ -2565,7 +2565,7 @@ li.clearfix {
 }
 
 .icon-link {
-    background-image: url('../../images/link.png');
+    background-image: url('../wwwroot/images/link.png');
     background-repeat: no-repeat;
     background-position: top left;
     background-size: 24px 24px;
@@ -2574,7 +2574,7 @@ li.clearfix {
 }
 
 .icon-unlink {
-    background-image: url('../../images/unlink.png');
+    background-image: url('../wwwroot/images/unlink.png');
     background-repeat: no-repeat;
     background-position: top left;
     background-size: 24px 24px;
@@ -2645,7 +2645,7 @@ li.clearfix {
     }
 
 .large-logo {
-    background-image: url('../../images/logo64.png');
+    background-image: url('../wwwroot/images/logo64.png');
     background-size: 48px 48px;
     height: 48px;
     width: 48px;
@@ -2737,7 +2737,7 @@ h3.userlist-header {
 }
 
 .icon-logout {
-    background-image: url('../../images/logout.png');
+    background-image: url('../wwwroot/images/logout.png');
     background-position: 0 0;
     background-size: 12px 16px;
     height: 16px;
@@ -2746,12 +2746,12 @@ h3.userlist-header {
 }
 
 #preferences .logout:hover .icon-logout {
-    background-image: url('../../images/logout-white.png');
+    background-image: url('../wwwroot/images/logout-white.png');
     background-repeat: no-repeat;
 }
 
 .icon-sound {
-    background-image: url('../../images/sound-on.png');
+    background-image: url('../wwwroot/images/sound-on.png');
     background-position: 0 0;
     background-size: 14px 14px;
     height: 14px;
@@ -2770,22 +2770,22 @@ h3.userlist-header {
 }
 
 #room-preferences .sound:hover .icon-sound {
-    background-image: url('../../images/sound-on-white.png');
+    background-image: url('../wwwroot/images/sound-on-white.png');
     background-repeat: no-repeat;
 }
 
 #room-preferences .sound.off .icon-sound {
-    background-image: url('../../images/sound-off.png');
+    background-image: url('../wwwroot/images/sound-off.png');
     background-repeat: no-repeat;
 }
 
 #room-preferences .sound.off:hover .icon-sound {
-    background-image: url('../../images/sound-off-white.png');
+    background-image: url('../wwwroot/images/richness-off-white.png');
     background-repeat: no-repeat;
 }
 
 .icon-toast {
-    background-image: url('../../images/toast-on.png');
+    background-image: url('../wwwroot/images/toast-on.png');
     background-position: 0 0;
     background-size: 10px 14px;
     height: 14px;
@@ -2795,22 +2795,22 @@ h3.userlist-header {
 }
 
 #room-preferences .toast:hover .icon-toast {
-    background-image: url('../../images/toast-on-white.png');
+    background-image: url('../wwwroot/images/toast-on-white.png');
     background-repeat: no-repeat;
 }
 
 #room-preferences .toast.off .icon-toast {
-    background-image: url('../../images/toast-off.png');
+    background-image: url('../wwwroot/images/toast-off.png');
     background-repeat: no-repeat;
 }
 
 #room-preferences .toast.off:hover .icon-toast {
-    background-image: url('../../images/toast-off-white.png');
+    background-image: url('../wwwroot/images/toast-off-white.png');
     background-repeat: no-repeat;
 }
 
 .icon-richness {
-    background-image: url('../../images/richness-on.png');
+    background-image: url('../wwwroot/images/richness-on.png');
     background-position: 0 0;
     background-size: 14px 14px;
     height: 14px;
@@ -2819,7 +2819,7 @@ h3.userlist-header {
 }
 
 .icon-download {
-    background-image: url('../../images/download-on.png');
+    background-image: url('../wwwroot/images/download-on.png');
     background-position: 0 0;
     background-size: 14px 14px;
     height: 14px;
@@ -2832,37 +2832,37 @@ h3.userlist-header {
 }
 
 #room-preferences .richness:hover .icon-richness {
-    background-image: url('../../images/richness-on-white.png');
+    background-image: url('../wwwroot/images/richness-on-white.png');
     background-repeat: no-repeat;
 }
 
 #room-preferences .richness.off .icon-richness {
-    background-image: url('../../images/richness-off.png');
+    background-image: url('../wwwroot/images/richness-off.png');
     background-repeat: no-repeat;
 }
 
 #room-preferences .richness.off:hover .icon-richness {
-    background-image: url('../../images/richness-off-white.png');
+    background-image: url('../wwwroot/images/richness-off-white.png');
     background-repeat: no-repeat;
 }
 
 #room-preferences .download .icon-download {
-    background-image: url('../../images/download-on.png');
+    background-image: url('../wwwroot/images/download-on.png');
     background-repeat: no-repeat;
 }
 
 #room-preferences .download:hover .icon-download {
-    background-image: url('../../images/download-on-white.png');
+    background-image: url('../wwwroot/images/download-on-white.png');
     background-repeat: no-repeat;
 }
 
 #room-preferences .download.off .icon-download {
-    background-image: url('../../images/download-off.png');
+    background-image: url('../wwwroot/images/download-off.png');
     background-repeat: no-repeat;
 }
 
 #room-preferences .download.off:hover .icon-download {
-    background-image: url('../../images/download-off-white.png');
+    background-image: url('../wwwroot/images/download-off-white.png');
     background-repeat: no-repeat;
 }
 
@@ -2871,7 +2871,7 @@ h3.userlist-header {
 }
 
 .icon-help {
-    background-image: url('../../images/question-icon.png');
+    background-image: url('../wwwroot/images/question-icon.png');
     background-position: 0 0;
     background-size: 10px 14px;
     height: 14px;
@@ -2881,7 +2881,7 @@ h3.userlist-header {
 }
 
 #preferences .help:hover .icon-help {
-    background-image: url('../../images/question-icon-white.png');
+    background-image: url('../wwwroot/images/question-icon-white.png');
     background-repeat: no-repeat;
 }
 
@@ -3132,7 +3132,7 @@ h3.userlist-header {
 @media (max-width:700px) {
     .home #heading h1 {
         text-indent: -9999px;
-        background-image: url('../../images/logo32.png');
+        background-image: url('../wwwroot/images/logo32.png');
         width: 32px;
         height: 32px;
         margin-top: 0;

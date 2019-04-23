@@ -111,14 +111,14 @@
             var room = getRoomElements(roomName);
             if (!room.isInitialized()) {
                 roomLoadingTimeout = window.setTimeout(function () {
-                    $roomLoadingIndicator.fadeIn('slow');
+                    //$roomLoadingIndicator.fadeIn('slow');
                 }, roomLoadingDelay);
             }
         } else {
+            $roomLoadingIndicator.fadeOut();
             if (roomLoadingTimeout) {
                 clearTimeout(roomLoadingTimeout);
             }
-            $roomLoadingIndicator.fadeOut();
         }
     }
 
@@ -128,19 +128,19 @@
 
     function sortRoomList(listToSort) {
         var sortedList = listToSort.sort(function (a, b) {
-            if (a.Closed && !b.Closed) {
+            if (a.closed && !b.closed) {
                 return 1;
-            } else if (b.Closed && !a.Closed) {
+            } else if (b.closed && !a.closed) {
                 return -1;
             }
 
-            if (a.Count > b.Count) {
+            if (a.count > b.count) {
                 return -1;
-            } else if (b.Count > a.Count) {
+            } else if (b.count > a.count) {
                 return 1;
             }
 
-            return a.Name.toString().toUpperCase().localeCompare(b.Name.toString().toUpperCase());
+            return a.name.toString().toUpperCase().localeCompare(b.name.toString().toUpperCase());
         });
         return sortedList;
     }
@@ -148,11 +148,11 @@
     function getRoomElements(roomName) {
         var roomId = getRoomId(roomName);
         var room = new Room($('#tabs-' + roomId),
-                        $('#userlist-' + roomId),
-                        $('#userlist-' + roomId + '-owners'),
-                        $('#userlist-' + roomId + '-active'),
-                        $('#messages-' + roomId),
-                        $('#roomTopic-' + roomId));
+            $('#userlist-' + roomId),
+            $('#userlist-' + roomId + '-owners'),
+            $('#userlist-' + roomId + '-active'),
+            $('#messages-' + roomId),
+            $('#roomTopic-' + roomId));
         return room;
     }
 
@@ -204,7 +204,7 @@
             $room = $targetList.find('[data-room="' + room.Name + '"]'),
             $count = $room.find('.count'),
             $topic = $room.find('.topic'),
-            roomName = room.Name.toString().toUpperCase(),
+            roomName = room.name.toString().toUpperCase(),
             processedTopic = ui.processContent(room.Topic);
 
         // if we don't find the room, we need to create it
@@ -245,18 +245,18 @@
         }
 
         // Do a little animation
-        $room.css('-webkit-animation-play-state', 'running').css('animation-play-state', 'running');
+        //$room.css('-webkit-animation-play-state', 'running').css('animation-play-state', 'running');
     }
 
     function addRoomToLobby(roomViewModel) {
         var lobby = getLobby(),
             $room = null,
-            roomName = roomViewModel.Name.toString().toUpperCase(),
-            count = roomViewModel.Count,
+            roomName = roomViewModel.name.toString().toUpperCase(),
+            count = roomViewModel.count,
             //count = 1,
-            closed = roomViewModel.Closed,
-            nonPublic = roomViewModel.Private,
-            $targetList = roomViewModel.Private ? lobby.owners : lobby.users,
+            closed = roomViewModel.closed,
+            nonPublic = roomViewModel.private,
+            $targetList = roomViewModel.private ? lobby.owners : lobby.users,
             i = null;
 
         roomViewModel.processedTopic = ui.processContent(roomViewModel.Topic);
@@ -279,7 +279,7 @@
         if (sortedRoomList) {
             var sortedRoomInsertIndex = sortedRoomList.length;
             for (i = 0; i < sortedRoomList.length; i++) {
-                if (sortedRoomList[i].Name.toString().toUpperCase().localeCompare(roomName) > 0) {
+                if (sortedRoomList[i].name.toString().toUpperCase().localeCompare(roomName) > 0) {
                     sortedRoomInsertIndex = i;
                     break;
                 }
@@ -290,7 +290,7 @@
         // handle updates on rooms not currently displayed to clients by removing from the public room list
         if (publicRoomList) {
             for (i = 0; i < publicRoomList.length; i++) {
-                if (publicRoomList[i].Name.toString().toUpperCase().localeCompare(roomName) === 0) {
+                if (publicRoomList[i].name.toString().toUpperCase().localeCompare(roomName) === 0) {
                     publicRoomList.splice(i, 1);
                     break;
                 }
@@ -361,8 +361,8 @@
 
     function addRoom(roomViewModel) {
         // Do nothing if the room exists
-        var roomName = roomViewModel.Name,
-            room = getRoomElements(roomViewModel.Name),
+        var roomName = roomViewModel.name,
+            room = getRoomElements(roomViewModel.name),
             roomId = null,
             viewModel = null,
             $messages = null,
@@ -383,7 +383,7 @@
         viewModel = {
             id: roomId,
             name: roomName,
-            closed: roomViewModel.Closed
+            closed: roomViewModel.closed
         };
 
         if (!roomCache[roomName.toString().toUpperCase()]) {
@@ -394,14 +394,14 @@
         ui.updateTabOverflow();
 
         $messages = $('<ul/>').attr('id', 'messages-' + roomId)
-                              .addClass('messages')
-                              .appendTo($chatArea)
-                              .hide();
+            .addClass('messages')
+            .appendTo($chatArea)
+            .hide();
 
         $('<div/>').attr('id', 'roomTopic-' + roomId)
-                              .addClass('roomTopic')
-                              .appendTo($chatArea)
-                              .hide();
+            .addClass('roomTopic')
+            .appendTo($chatArea)
+            .hide();
 
         userContainer = $('<div/>').attr('id', 'userlist-' + roomId)
             .addClass('users')
@@ -428,7 +428,7 @@
                 var $child = $messages.children('.message:first');
                 if ($child.length > 0) {
                     messageId = $child.attr('id')
-                                      .substr(2); // Remove the "m-"
+                        .substr(2); // Remove the "m-"
                     $ui.trigger(ui.events.scrollRoomTop, [{ name: roomName, messageId: messageId }]);
                 }
             }
@@ -1149,14 +1149,14 @@
                 }
                 else {
                     toast.enableToast()
-                    .done(function () {
-                        setRoomPreference(room.getName(), 'canToast', true);
-                        $this.removeClass('off');
-                    })
-                    .fail(function () {
-                        setRoomPreference(room.getName(), 'canToast', false);
-                        $this.addClass('off');
-                    });
+                        .done(function () {
+                            setRoomPreference(room.getName(), 'canToast', true);
+                            $this.removeClass('off');
+                        })
+                        .fail(function () {
+                            setRoomPreference(room.getName(), 'canToast', false);
+                            $this.addClass('off');
+                        });
                 }
             });
 
@@ -1188,9 +1188,9 @@
                 url = nav > 0 ? url.substring(0, nav) : url;
                 url = url.replace('default.aspx', '');
                 url += 'api/v1/messages/' +
-                       encodeURI(room.getName()) +
-                       '?download=true&range=' +
-                       encodeURIComponent($downloadRange.val());
+                    encodeURI(room.getName()) +
+                    '?download=true&range=' +
+                    encodeURIComponent($downloadRange.val());
 
                 $('<iframe style="display:none">').attr('src', url).appendTo(document.body);
 
@@ -1311,17 +1311,17 @@
                             var room = getCurrentRoomElements();
                             // exclude current username from autocomplete
                             return room.users.find('li[data-name != "' + ui.getUserName() + '"]')
-                                         .not('.room')
-                                         .map(function () {
-                                             if ($(this).data('name')) {
-                                                 return $(this).data('name') + ' ';
-                                             }
+                                .not('.room')
+                                .map(function () {
+                                    if ($(this).data('name')) {
+                                        return $(this).data('name') + ' ';
+                                    }
 
-                                             return '';
-                                         })
-                                         .sort(function (a, b) {
-                                             return a.toString().toUpperCase().localeCompare(b.toString().toUpperCase());
-                                         });
+                                    return '';
+                                })
+                                .sort(function (a, b) {
+                                    return a.toString().toUpperCase().localeCompare(b.toString().toUpperCase());
+                                });
                         case '#':
                             return getRooms()
                                 .map(function (room) { return room.Name + ' '; });
@@ -1405,8 +1405,8 @@
             var room = getRoomElements(roomName),
                 $user = room.getUser(ownerName);
             $user
-                 .removeAttr('data-owner')
-                 .data('owner', false);
+                .removeAttr('data-owner')
+                .data('owner', false);
             room.updateUserStatus($user);
         },
         setActiveRoom: navigateToRoom,
@@ -1549,11 +1549,11 @@
 
                 // Populate the room cache
                 for (i = 0; i < rooms.length; ++i) {
-                    roomCache[rooms[i].Name.toString().toUpperCase()] = true;
+                    roomCache[rooms[i].name.toString().toUpperCase()] = true;
                 }
 
                 for (i = 0; i < privateRooms.length; ++i) {
-                    roomCache[privateRooms[i].Name.toString().toUpperCase()] = true;
+                    roomCache[privateRooms[i].name.toString().toUpperCase()] = true;
                 }
 
                 // sort private lobby rooms
@@ -1562,12 +1562,12 @@
                 // sort other lobby rooms but filter out private rooms
                 publicRoomList = sortRoomList(rooms).filter(function (room) {
                     return !privateSorted.some(function (allowed) {
-                        return allowed.Name === room.Name;
+                        return allowed.name === room.name;
                     });
                 });
 
                 sortedRoomList = rooms.sort(function (a, b) {
-                    return a.Name.toString().toUpperCase().localeCompare(b.Name.toString().toUpperCase());
+                    return a.name.toString().toUpperCase().localeCompare(b.name.toString().toUpperCase());
                 });
 
                 lobby.owners.empty();
@@ -1752,10 +1752,10 @@
                 lrgSrc = 'https://secure.gravatar.com/avatar/' + user.Hash + '?s=96&d=mm';
 
             $user.find('.gravatar-wrapper .gravatar')
-                 .attr('src', src);
+                .attr('src', src);
 
             $user.find('.gravatar-wrapper .jabbr-user-card .gravatar-large')
-                 .attr('src', lrgSrc);
+                .attr('src', lrgSrc);
         },
         showGravatarProfile: function (profile) {
             var room = getCurrentRoomElements(),
@@ -1811,7 +1811,7 @@
             timeout = window.setTimeout(function () {
                 $user.removeClass('typing');
             },
-            3000);
+                3000);
 
             $user.data('typing', timeout);
         },
@@ -1866,8 +1866,8 @@
 
                 if (this.date.toDate().diffDays(previousTimestamp.toDate())) {
                     ui.addMessageBeforeTarget(this.date.toLocaleDateString(), 'list-header', $target)
-                      .addClass('date-header')
-                      .find('.right').remove(); // remove timestamp on date indicator
+                        .addClass('date-header')
+                        .find('.right').remove(); // remove timestamp on date indicator
 
                     // Force a user name to show after the header
                     previousUser = null;
@@ -2000,7 +2000,7 @@
             processMessage(message);
 
             $('#m-' + message.id).find('.middle')
-                                 .html(message.message);
+                .html(message.message);
         },
         messageExists: function (id) {
             return $('#m-' + id).length > 0;
@@ -2027,16 +2027,16 @@
             }
 
             var now = new Date(),
-            message = {
-                message: options.encoded ? options.content : ui.processContent(options.content),
-                type: type,
-                date: now,
-                when: now.formatTime(true),
-                fulldate: now.toLocaleString(),
-                img: options.img,
-                source: options.source,
-                id: options.id
-            };
+                message = {
+                    message: options.encoded ? options.content : ui.processContent(options.content),
+                    type: type,
+                    date: now,
+                    when: now.formatTime(true),
+                    fulldate: now.toLocaleString(),
+                    img: options.img,
+                    source: options.source,
+                    id: options.id
+                };
 
             return templates.notification.tmpl(message);
         },
@@ -2079,7 +2079,7 @@
                 if (!lastMessage.length || thisDate.toDate().diffDays(lastDate.toDate())) {
                     var dateDisplay = moment(thisDate);
                     ui.addMessage(dateDisplay.format('dddd, MMMM Do YYYY'), 'date-header list-header', room.getName())
-                      .find('.right').remove(); // remove timestamp on date indicator
+                        .find('.right').remove(); // remove timestamp on date indicator
                 }
             }
 
@@ -2162,7 +2162,7 @@
         },
         setCommands: function (commands) {
             ui.commands = commands.sort(function (a, b) {
-                return a.Name.toString().toUpperCase().localeCompare(b.Name.toString().toUpperCase());
+                return a.name.toString().toUpperCase().localeCompare(b.name.toString().toUpperCase());
             });
 
             ui.commandsLookup = {};
@@ -2210,16 +2210,16 @@
 
             if (command && command.ConfirmMessage !== null) {
                 var $dialog = templates.commandConfirm.tmpl(command).appendTo('#dialog-container').modal()
-                        .on('hidden.bs.modal', function () {
-                            $dialog.remove();
-                        })
-                        .on('click', 'a.btn', function () {
-                            if ($(this).is('.btn-danger')) {
-                                $ui.trigger(ui.events.sendMessage, [msg, null, true]);
-                            }
+                    .on('hidden.bs.modal', function () {
+                        $dialog.remove();
+                    })
+                    .on('click', 'a.btn', function () {
+                        if ($(this).is('.btn-danger')) {
+                            $ui.trigger(ui.events.sendMessage, [msg, null, true]);
+                        }
 
-                            $dialog.modal('hide');
-                        });
+                        $dialog.modal('hide');
+                    });
                 return true;
             } else {
                 return false;
@@ -2325,7 +2325,7 @@
                 // Reload the page
                 document.location = document.location.pathname;
             },
-            updateTimeout);
+                updateTimeout);
         },
         showReloadMessageNotification: function () {
             $reloadMessageNotification.appendTo($chatArea);
@@ -2412,7 +2412,7 @@
         },
         confirmMessage: function (id) {
             $('#m-' + id).removeClass('failed')
-                         .removeClass('loading');
+                .removeClass('loading');
         },
         failMessage: function (id, isCommand) {
             var $message = $('#m-' + id);
@@ -2448,10 +2448,10 @@
             var room = getRoomElements(roomName),
                 $user = room.getUser(adminName);
             $user
-                 .removeAttr('data-admin')
-                 .data('admin', false)
-                 .find('.admin')
-                 .text('');
+                .removeAttr('data-admin')
+                .data('admin', false)
+                .find('.admin')
+                .text('');
             room.updateUserStatus($user);
         },
         setLastPrivate: function (userName) {

@@ -26,6 +26,7 @@ using Microsoft.AspNetCore.Identity;
 using static JabbR_Core.Services.MessageServices;
 using JabbR_Core.Data.Logging;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.AspNetCore.Authentication.Cookies;
 
 namespace JabbR_Core
 {
@@ -66,7 +67,7 @@ namespace JabbR_Core
             //If not running in Development (ie the env variable ASPNETCORE_ENVIRONMENT!=DEVELOPMENT) then the format to set at cmd line (on Windows)
             //set connectionString=Server=(localdb)\mssqllocaldb;Database=aspnet-application;Trusted_Connection=True;MultipleActiveResultSets=true
 
-            services.AddDbContext<JabbrContext>(options => /*options.UseInMemoryDatabase()*/ options.UseSqlServer(connection));
+            //services.AddDbContext<JabbrContext>(options => /*options.UseInMemoryDatabase()*/ options.UseSqlServer(connection));
 
             //services.AddEntityFrameworkInMemoryDatabase();
             //services.AddDbContext<JabbrContext>();
@@ -81,13 +82,20 @@ namespace JabbR_Core
             //        .UseInMemoryDatabase();
             //    });
 
-            //services.AddDbContext<JabbrContext>(options => options.UseSqlServer(connection));
+            services.AddDbContext<JabbrContext>(options => options.UseSqlServer(connection));
 
             services.AddAuthorization();
             services.AddMvc(options =>
             {
               //  options.Filters.Add(new RequireHttpsAttribute());
             });
+            //services.AddCors(options => options.AddPolicy("CorsPolicy",
+            //builder =>
+            //{
+            //    builder.AllowAnyMethod().AllowAnyHeader()
+            //           .WithOrigins("http://localhost:44302")
+            //           .AllowCredentials();
+            //}));
             services.AddSignalR();
 
             services.AddScoped<ICache>(provider => null);
@@ -113,15 +121,9 @@ namespace JabbR_Core
             services.AddIdentity<ChatUser, IdentityRole>()
                 .AddEntityFrameworkStores<JabbrContext>()
                 .AddDefaultTokenProviders();
-
+            services.ConfigureApplicationCookie(options => options.LoginPath = "/Account/LogIn");
             services.AddTransient<IEmailSender, AuthMessageSender>();  
             services.Configure<AuthMessageSenderOptions>(_configuration);
-
-            //SignalR currently doesn't use DI to resolve hubs. This will allow it.
-           // services.AddSingleton<IHubActivator, DefaultHubActivator>();
-            // This code has no effects right now, Chat hubs aren't called via DI
-            // in SignalR, so at the moment we can't control the same objects being 
-            // passed to hubs and ChatService
             services.AddTransient<Chat>(provider => 
             {
                 // This is never hit
@@ -139,8 +141,6 @@ namespace JabbR_Core
         {
             //Security headers
             app.UseHsts(options => options.MaxAge(days: 365));
-
-            //TODO: AJS FIX UNSAFEEVAL AFTER INCLUDING ANGULAR JS 
             app.UseCsp(options => 
             options.DefaultSources(s => s.Self())
                     .ScriptSources(s => s.Self().CustomSources("ajax.aspnetcdn.com", "code.jquery.com").UnsafeEval())
@@ -149,22 +149,7 @@ namespace JabbR_Core
             app.UseXXssProtection(option => option.EnabledWithBlockMode());
             app.UseXfo(options => options.Deny());
             app.UseXContentTypeOptions();
-
-
             loggerFactory.AddProvider(new FileLoggerProvider());
-            ////////////////////////////////////////////////////////////////
-            // TODO: Authorize Attribute Re-routing to '~/Account/Login'
-            //app.UseCookieAuthentication(new CookieAuthenticationOptions
-            //{
-            //    AuthenticationScheme = Constants.JabbRAuthType,
-            //    LoginPath = new PathString("/Account/Login/"),
-            //    AccessDeniedPath = new PathString("/Account/Forbidden/"),
-            //    AutomaticAuthenticate = true, // run with every request and look for cookie if available
-            //    AutomaticChallenge = true, // take raw 401 and 403 and use redirect paths as defined
-            //    CookieName = "jabbr.id"
-            //});
-            ////////////////////////////////////////////////////////////////
-
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
@@ -174,7 +159,7 @@ namespace JabbR_Core
             loggerFactory.AddConsole();
             app.UseStaticFiles();
 
-            app.UseIdentity();
+            app.UseAuthentication();
             // app.UseFacebookAuthentication(new FacebookOptions()
             // {
             //     AppId = _configuration["Authentication:Facebook:AppId"],
@@ -198,6 +183,7 @@ namespace JabbR_Core
 
 
             app.UseMvcWithDefaultRoute();
+            //app.UseCors("CorsPolicy");
             app.UseSignalR(routes=>{
                 routes.MapHub<Chat>("/chat");
             });

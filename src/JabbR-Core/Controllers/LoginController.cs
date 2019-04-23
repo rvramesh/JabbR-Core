@@ -5,7 +5,7 @@ using System.Security.Claims;
 using System.Threading.Tasks;
 using JabbR_Core.Infrastructure;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Http.Authentication;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Mvc;
 
 // For more information on enabling MVC for empty projects, visit http://go.microsoft.com/fwlink/?LinkID=397860
@@ -31,13 +31,13 @@ namespace JabbR_Core.Controllers
             claims.Add(new Claim(JabbRClaimTypes.Identifier, "1"));
             var claimsIdentity = new ClaimsIdentity(claims, Constants.JabbRAuthType);
             var claimsPrincipal = new ClaimsPrincipal(claimsIdentity);
-            await _context.HttpContext.Authentication.SignInAsync(Constants.JabbRAuthType, claimsPrincipal);
+            await _context.HttpContext.SignInAsync(Constants.JabbRAuthType, claimsPrincipal);
             return Content("Logged in");
         }
 
         public async Task<IActionResult> Logout()
         {
-            await HttpContext.Authentication.SignOutAsync(Constants.JabbRAuthType);
+            await HttpContext.SignOutAsync(Constants.JabbRAuthType);
             return Content("Logged out");
         }
     }

@@ -18,6 +18,13 @@ using System.Collections.ObjectModel;
 
 namespace JabbR_Core.Hubs
 {
+    public class SendClass
+    {
+        public ClientMessage clientMessage { get; set; }
+        public string roomName { get; set; }
+        public string content { get; set; }
+    }
+
     public class Chat : DynamicHub, INotificationService
     {
         // Never assigned to, always null
@@ -56,16 +63,15 @@ namespace JabbR_Core.Hubs
             }
         }
 
-        public void Join()
-        {
-            Join(reconnecting: false);
-        }
+        //public void Join()
+        //{
+        //    Join(reconnecting: false);
+        //}
 
-        public void Join(bool reconnecting)
+        public void Join(bool reconnecting = false)
         {
             // Get the client state
             var userId = Context.User.GetUserId();
-
             // Try to get the user from the client state
             ChatUser user = _repository.GetUserById(userId);
 
@@ -119,6 +125,23 @@ namespace JabbR_Core.Hubs
         public IEnumerable<CommandMetaData> GetCommands()
         {
             return CommandManager.GetCommandsMetaData();
+        }
+        public void Typing(string roomName)
+        {
+            string userId = Context.User.GetUserId();
+
+            ChatUser user = _repository.GetUserById(userId);
+            ChatRoom room = _repository.VerifyUserRoom(_cache, user, roomName);
+
+            if (room == null || (room.Private && !user.AllowedRooms.Any(i=>i.ChatRoomKeyNavigation.Name == room.Name)))
+            {
+                return;
+            }
+
+            UpdateActivity(user, room);
+
+            var userViewModel = new UserViewModel(user);
+            Clients.Group(room.Name).setTyping(userViewModel, room.Name);
         }
 
         // More specific return type? Object[]? or cast to Array?
@@ -200,22 +223,31 @@ namespace JabbR_Core.Hubs
             _repository.CommitChanges();
         }
 
-        public bool Send(string content, string roomName)
-        {
-            var message = new ClientMessage
-            {
-                Content = content,  // '/join light_meow'
-                Room = roomName,    // 'Lobby'
-            };
+        //public bool Send(string content, string roomName)
+        //{
+        //    var message = new ClientMessage
+        //    {
+        //        Content = content,  // '/join light_meow'
+        //        Room = roomName,    // 'Lobby'
+        //    };
 
-            return Send(message);
-        }
+        //    return Send(message);
+        //}
 
-        public bool Send(ClientMessage clientMessage)
+        public bool Send(string content="",string roomName="",string conId = "")
         {
             //Commented out for resting purposes
             // TODO: set env variable
             //CheckStatus();
+
+
+            var message = new ClientMessage
+            {
+                Content = content,  // '/join light_meow'
+                Room = roomName,    // 'Lobby'
+                Id = conId
+            };
+            var clientMessage = message;
 
             //reject it if it's too long
             if (_settings.MaxMessageLength > 0 && clientMessage.Content.Length > _settings.MaxMessageLength)
@@ -347,7 +379,7 @@ namespace JabbR_Core.Hubs
 
             // Notify users of the room count change
             OnRoomChanged(room);
-
+            Groups.AddToGroupAsync(Context.ConnectionId, room.Name);
             foreach (var client in user.ConnectedClients)
             {
                 Groups.AddToGroupAsync(client.Id, room.Name);
@@ -822,6 +854,15 @@ namespace JabbR_Core.Hubs
 
         void INotificationService.GenerateMeme(ChatUser user, ChatRoom room, string message)
         {
+            var m = new ClientMessage()
+            {
+                Content = message,
+                Room = room.Name,
+            };
+            var s = new SendClass()
+            {
+                clientMessage = m
+            };
             Send(message, room.Name);
         }
 
